@@ -1,0 +1,24 @@
+# Lua bytecode (just in case)
+*.luac
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Backup/swap files
+*.swp
+*.swo
+*.swn
+*~
+
+# Neovim plugin manager folders (if used for testing locally)
+.pack/
+site/
+
+# Logs or temp files
+*.log
+.idea/
+.vscode/
+
+# Ignore user's idea storage directory (don't commit personal files)
+.ideaDrop/

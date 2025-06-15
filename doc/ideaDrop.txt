@@ -1,0 +1,76 @@
+*ideaDrop.txt*    ideaDrop.nvim plugin for Neovim
+
+==============================================================================
+INTRODUCTION                                        *ideaDrop-introduction*
+
+ideaDrop.nvim is a simple Neovim plugin that allows you to drop and organize
+your ideas in floating Markdown sidebars. It provides a clean and
+distraction-free interface for quick note-taking and idea organization.
+
+==============================================================================
+INSTALLATION                                        *ideaDrop-installation*
+
+Using lazy.nvim:
+
+    {
+      dir = "path/ideaDrop",
+      name = "ideaDrop",
+      config = function()
+        require("ideaDrop").setup({
+          idea_dir = "path/ideaDrop",
+        })
+      end,
+    }
+
+==============================================================================
+CONFIGURATION                                       *ideaDrop-configuration*
+
+ideaDrop.nvim can be configured by passing a table to the setup function:
+
+    require("ideaDrop").setup({
+      idea_dir = "/path/to/your/ideas",  -- Directory to store idea files
+    })
+
+OPTIONS                                             *ideaDrop-options*
+
+idea_dir (string) ~
+    Default: vim.fn.stdpath("data") .. "/ideaDrop"
+    Directory where your idea files will be stored.
+
+==============================================================================
+COMMANDS                                           *ideaDrop-commands*
+
+:Idea                                              *:Idea*
+    Opens today's idea file in a floating sidebar.
+
+:Idea {name}                                       *:Idea-name*
+    Opens or creates an idea file with the specified name.
+    Example: `:Idea project/vision`
+
+:Idea listAll                                      *:Idea-listAll*
+    Opens a fuzzy picker to select from existing ideas.
+
+==============================================================================
+FEATURES                                           *ideaDrop-features*
+
+- Markdown editor in a floating sidebar
+- Automatic save on close
+- Date-based and custom named notes
+- Folder support (e.g., project/vision.md)
+- Fuzzy finder for existing ideas
+- Clean and distraction-free interface
+
+==============================================================================
+EXAMPLES                                           *ideaDrop-examples*
+
+1. Open today's idea:
+    :Idea
+
+2. Create a new idea in a project folder:
+    :Idea project/nextgen
+
+3. List and select from existing ideas:
+    :Idea listAll
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl: 
