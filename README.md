@@ -20,7 +20,7 @@
 
 ```lua
 {
-  dir = "/path/to/ideaDrop",
+  "CarGDev/ideadrop.nvim",
   name = "ideaDrop",
   dependencies = {
     "nvim-tree/nvim-tree.lua",
@@ -38,7 +38,7 @@
 
 ```lua
 use {
-  dir = "/path/to/ideaDrop",
+  "CarGDev/ideadrop.nvim",
   requires = {
     "nvim-tree/nvim-tree.lua",
     "nvim-tree/nvim-web-devicons",
