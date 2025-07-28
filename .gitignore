@@ -1,6 +1,8 @@
 # Lua bytecode (just in case)
 *.luac
 
+*test*
+todo*
 # OS junk
 .DS_Store
 Thumbs.db

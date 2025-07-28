@@ -1,6 +1,6 @@
--- ideaDrop/list.lua
-local config = require("ideaDrop.config")
-local sidebar = require("ideaDrop.sidebar")
+-- ideaDrop/features/list.lua
+local config = require("ideaDrop.core.config")
+local sidebar = require("ideaDrop.ui.sidebar")
 
 ---@class List
 ---@field list_all fun(): nil
