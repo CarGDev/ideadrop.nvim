@@ -31,7 +31,25 @@ M.options = {
 ---@param user_opts IdeaDropOptions|nil User configuration options
 ---@return nil
 function M.setup(user_opts)
-	M.options = vim.tbl_deep_extend("force", M.options, user_opts or {})
+	user_opts = user_opts or {}
+
+	-- Handle nil idea_dir (don't override default with nil)
+	if user_opts.idea_dir == nil then
+		user_opts.idea_dir = M.options.idea_dir
+	end
+
+	-- Expand environment variables and ~ in idea_dir
+	if user_opts.idea_dir then
+		user_opts.idea_dir = vim.fn.expand(user_opts.idea_dir)
+	end
+
+	M.options = vim.tbl_deep_extend("force", M.options, user_opts)
+end
+
+---Gets the idea directory path (expanded)
+---@return string
+function M.get_idea_dir()
+	return vim.fn.expand(M.options.idea_dir or "")
 end
 
 return M

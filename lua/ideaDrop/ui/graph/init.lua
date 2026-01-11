@@ -437,11 +437,17 @@ function M.open(opts)
 	vim.api.nvim_win_set_option(state.win, "cursorline", false)
 
 	-- Build graph data
-	vim.notify("Building graph...", vim.log.levels.INFO)
+	local config = require("ideaDrop.core.config")
+	local idea_dir = vim.fn.expand(config.options.idea_dir or "")
+	vim.notify(string.format("Building graph from: %s", idea_dir), vim.log.levels.INFO)
+	
 	state.graph = data.build_graph()
 
 	if #state.graph.node_list == 0 then
-		vim.notify("No notes found to visualize", vim.log.levels.WARN)
+		vim.notify(
+			string.format("No notes found to visualize in: %s", idea_dir),
+			vim.log.levels.WARN
+		)
 		M.close()
 		return
 	end

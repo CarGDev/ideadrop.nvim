@@ -92,13 +92,45 @@ end
 ---Builds the complete graph from markdown files
 ---@return GraphData
 function M.build_graph()
-	local idea_dir = config.options.idea_dir
+	-- Get idea_dir using the getter function if available, otherwise direct access
+	local idea_dir = config.get_idea_dir and config.get_idea_dir() or config.options.idea_dir
 	local graph = types.create_graph_data()
 
-	-- Find all markdown files
-	local files = vim.fn.glob(idea_dir .. "/**/*.md", false, true)
+	-- Validate idea_dir
+	if not idea_dir or idea_dir == "" then
+		vim.notify("❌ idea_dir is not configured. Please set it in setup().", vim.log.levels.ERROR)
+		return graph
+	end
+
+	-- Expand any environment variables or ~ in path (in case getter wasn't used)
+	idea_dir = vim.fn.expand(idea_dir)
+
+	-- Remove trailing slash if present
+	idea_dir = idea_dir:gsub("/$", "")
+
+	-- Check if directory exists
+	if vim.fn.isdirectory(idea_dir) == 0 then
+		vim.notify("❌ idea_dir does not exist: " .. idea_dir, vim.log.levels.ERROR)
+		return graph
+	end
+
+	-- Find all markdown files (try recursive first, then flat)
+	local glob_pattern = idea_dir .. "/**/*.md"
+	local files = vim.fn.glob(glob_pattern, false, true)
+
+	-- Fallback: try non-recursive if recursive finds nothing
+	if #files == 0 then
+		local files_flat = vim.fn.glob(idea_dir .. "/*.md", false, true)
+		if #files_flat > 0 then
+			files = files_flat
+		end
+	end
 
 	if #files == 0 then
+		vim.notify(
+			string.format("📂 No .md files found in: %s", idea_dir),
+			vim.log.levels.WARN
+		)
 		return graph
 	end
 
