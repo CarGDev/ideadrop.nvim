@@ -46,9 +46,11 @@ A new force-directed graph view that visualizes connections between your notes:
   - `:IdeaGraph` - Opens the graph visualization
   - `:IdeaGraph animate` - Opens with animated layout
   - `:IdeaGraph refresh` - Refreshes graph data
+  - `:IdeaGraph rebuild` - Force full cache rebuild
   - `:IdeaGraph close` - Closes the graph window
   - `:IdeaGraphFilter tag <name>` - Filter graph by tag
   - `:IdeaGraphFilter folder <name>` - Filter graph by folder
+  - `:IdeaGraphClearCache` - Clear the graph cache file
 
 - **New Configuration Options**:
   - `graph.animate` - Enable animated layout (default: false)
@@ -62,6 +64,29 @@ A new force-directed graph view that visualizes connections between your notes:
   - `lua/ideaDrop/ui/graph/layout.lua` - Force-directed layout algorithm
   - `lua/ideaDrop/ui/graph/renderer.lua` - Character-based canvas renderer
   - `lua/ideaDrop/ui/graph/init.lua` - Main graph module
+  - `lua/ideaDrop/ui/graph/cache.lua` - Caching system for fast loading
+
+#### ⚡ Graph Performance Optimizations
+
+Fast loading system similar to Obsidian's caching approach:
+
+- **Caching System** (`cache.lua`):
+  - Stores parsed links and tags per file in `.ideadrop-graph-cache.json`
+  - Only re-parses files that have been modified (mtime-based invalidation)
+  - First load scans all files, subsequent loads are nearly instant
+  - Cache stored in idea_dir alongside your notes
+
+- **Layout Algorithm Optimizations**:
+  - Reduced max iterations (300 → 100) for faster convergence
+  - Barnes-Hut approximation for large graphs (100+ nodes)
+  - Skip distant node pairs in repulsion calculations
+  - Local math function caching for speed
+  - Tuned force parameters for faster stabilization
+
+- **File Scanning**:
+  - Uses `vim.fs.find` for faster directory scanning (Neovim 0.8+)
+  - Fallback to glob for older versions
+  - Better path handling with environment variable expansion
 
 #### Other Additions
 
