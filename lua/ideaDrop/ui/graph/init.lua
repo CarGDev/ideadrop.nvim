@@ -439,9 +439,9 @@ function M.open(opts)
 	-- Build graph data
 	local config = require("ideaDrop.core.config")
 	local idea_dir = vim.fn.expand(config.options.idea_dir or "")
-	vim.notify(string.format("Building graph from: %s", idea_dir), vim.log.levels.INFO)
+	vim.notify(string.format("🕸️ Loading graph from: %s", idea_dir), vim.log.levels.INFO)
 	
-	state.graph = data.build_graph()
+	state.graph = data.build_graph(opts.force_rebuild)
 
 	if #state.graph.node_list == 0 then
 		vim.notify(

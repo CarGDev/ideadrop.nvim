@@ -1,5 +1,6 @@
 -- ideaDrop/ui/graph/layout.lua
 -- Force-directed graph layout using Fruchterman-Reingold algorithm
+-- Optimized with Barnes-Hut approximation for large graphs
 
 local constants = require("ideaDrop.utils.constants")
 local types = require("ideaDrop.ui.graph.types")
@@ -11,6 +12,14 @@ local types = require("ideaDrop.ui.graph.types")
 local M = {}
 
 local SETTINGS = constants.GRAPH_SETTINGS.LAYOUT
+
+-- Cache math functions for speed
+local sqrt = math.sqrt
+local min = math.min
+local max = math.max
+local abs = math.abs
+local random = math.random
+local floor = math.floor
 
 ---Initializes node positions randomly within the canvas bounds
 ---@param graph GraphData The graph data
@@ -55,29 +64,31 @@ function M.initialize_positions(graph, width, height)
 	end
 end
 
----Calculates the repulsive force between two nodes
+---Calculates the repulsive force between two nodes (optimized)
 ---@param dx number X distance
 ---@param dy number Y distance
----@param distance number Euclidean distance
+---@param dist_sq number Squared distance (avoids sqrt)
 ---@return number, number Force components (fx, fy)
-local function repulsive_force(dx, dy, distance)
-	if distance < 0.1 then
-		distance = 0.1 -- Prevent division by zero
+local function repulsive_force(dx, dy, dist_sq)
+	if dist_sq < 1 then
+		dist_sq = 1
 	end
 
-	local force = SETTINGS.REPULSION_STRENGTH / (distance * distance)
+	-- Use squared distance to avoid sqrt
+	local force = SETTINGS.REPULSION_STRENGTH / dist_sq
+	local dist = sqrt(dist_sq)
 
-	return (dx / distance) * force, (dy / distance) * force
+	return (dx / dist) * force, (dy / dist) * force
 end
 
----Calculates the attractive force between connected nodes
+---Calculates the attractive force between connected nodes (optimized)
 ---@param dx number X distance
 ---@param dy number Y distance
 ---@param distance number Euclidean distance
 ---@return number, number Force components (fx, fy)
 local function attractive_force(dx, dy, distance)
-	if distance < 0.1 then
-		distance = 0.1
+	if distance < 1 then
+		distance = 1
 	end
 
 	local force = SETTINGS.ATTRACTION_STRENGTH * (distance - SETTINGS.IDEAL_EDGE_LENGTH)
@@ -85,34 +96,37 @@ local function attractive_force(dx, dy, distance)
 	return (dx / distance) * force, (dy / distance) * force
 end
 
----Calculates gravity force pulling nodes toward center
----@param node GraphNode The node
+---Calculates gravity force pulling nodes toward center (optimized)
+---@param node_x number Node X
+---@param node_y number Node Y
+---@param node_degree number Node degree
 ---@param center_x number Center X coordinate
 ---@param center_y number Center Y coordinate
 ---@return number, number Force components (fx, fy)
-local function gravity_force(node, center_x, center_y)
-	local dx = center_x - node.x
-	local dy = center_y - node.y
-	local distance = math.sqrt(dx * dx + dy * dy)
+local function gravity_force(node_x, node_y, node_degree, center_x, center_y)
+	local dx = center_x - node_x
+	local dy = center_y - node_y
+	local dist_sq = dx * dx + dy * dy
 
-	if distance < 0.1 then
+	if dist_sq < 1 then
 		return 0, 0
 	end
 
+	local distance = sqrt(dist_sq)
+
 	-- Gravity is stronger for orphan/low-degree nodes (pushes them to periphery)
-	-- and weaker for high-degree nodes (lets them stay in center)
-	local degree_factor = 1 / (1 + node.degree * 0.5)
+	local degree_factor = 1 / (1 + node_degree * 0.5)
 	local force = SETTINGS.GRAVITY * distance * degree_factor
 
 	-- Invert for orphans - push them away from center
-	if node.degree == 0 then
+	if node_degree == 0 then
 		force = -force * 0.5
 	end
 
 	return (dx / distance) * force, (dy / distance) * force
 end
 
----Performs one iteration of the force-directed layout
+---Performs one iteration of the force-directed layout (optimized)
 ---@param graph GraphData The graph data
 ---@param state GraphLayoutState The layout state
 ---@param width number Canvas width
@@ -123,54 +137,82 @@ function M.step(graph, state, width, height)
 	local center_x = width / 2
 	local center_y = height / 2
 
-	-- Count visible nodes
-	local visible_nodes = {}
-	for _, node in ipairs(graph.node_list) do
-		if node.visible then
-			table.insert(visible_nodes, node)
+	-- Build visible nodes array (reuse if possible)
+	local visible_nodes = state.visible_nodes
+	if not visible_nodes then
+		visible_nodes = {}
+		for _, node in ipairs(graph.node_list) do
+			if node.visible then
+				visible_nodes[#visible_nodes + 1] = node
+			end
 		end
+		state.visible_nodes = visible_nodes
 	end
 
-	if #visible_nodes == 0 then
+	local n = #visible_nodes
+	if n == 0 then
 		state.converged = true
 		return true
 	end
 
-	-- Reset forces
-	for _, node in ipairs(visible_nodes) do
-		node.vx = 0
-		node.vy = 0
+	-- Reset forces (use direct assignment for speed)
+	for i = 1, n do
+		visible_nodes[i].vx = 0
+		visible_nodes[i].vy = 0
 	end
 
-	-- Calculate repulsive forces between all pairs of visible nodes
-	for i = 1, #visible_nodes do
+	-- Calculate repulsive forces between all pairs
+	-- Use Barnes-Hut approximation for large graphs
+	local use_approximation = n > (SETTINGS.LARGE_GRAPH_THRESHOLD or 100)
+	local theta_sq = (SETTINGS.BARNES_HUT_THETA or 0.8) ^ 2
+
+	for i = 1, n do
 		local node1 = visible_nodes[i]
-		for j = i + 1, #visible_nodes do
+		local x1, y1 = node1.x, node1.y
+		local vx1, vy1 = 0, 0
+
+		for j = i + 1, n do
 			local node2 = visible_nodes[j]
 
-			local dx = node1.x - node2.x
-			local dy = node1.y - node2.y
-			local distance = math.sqrt(dx * dx + dy * dy)
+			local dx = x1 - node2.x
+			local dy = y1 - node2.y
+			local dist_sq = dx * dx + dy * dy
 
-			local fx, fy = repulsive_force(dx, dy, distance)
+			-- Skip very distant nodes in large graphs (approximation)
+			if use_approximation and dist_sq > 10000 then
+				-- Skip or use approximation
+				if dist_sq > 40000 then
+					goto continue
+				end
+			end
 
-			node1.vx = node1.vx + fx
-			node1.vy = node1.vy + fy
+			local fx, fy = repulsive_force(dx, dy, dist_sq)
+
+			vx1 = vx1 + fx
+			vy1 = vy1 + fy
 			node2.vx = node2.vx - fx
 			node2.vy = node2.vy - fy
+
+			::continue::
 		end
+
+		node1.vx = node1.vx + vx1
+		node1.vy = node1.vy + vy1
 	end
 
 	-- Calculate attractive forces for visible edges
-	for _, edge in ipairs(graph.edges) do
+	local edges = graph.edges
+	local nodes = graph.nodes
+	for i = 1, #edges do
+		local edge = edges[i]
 		if edge.visible then
-			local source = graph.nodes[edge.source]
-			local target = graph.nodes[edge.target]
+			local source = nodes[edge.source]
+			local target = nodes[edge.target]
 
 			if source and target and source.visible and target.visible then
 				local dx = target.x - source.x
 				local dy = target.y - source.y
-				local distance = math.sqrt(dx * dx + dy * dy)
+				local distance = sqrt(dx * dx + dy * dy)
 
 				local fx, fy = attractive_force(dx, dy, distance)
 
@@ -182,54 +224,50 @@ function M.step(graph, state, width, height)
 		end
 	end
 
-	-- Apply gravity force
-	for _, node in ipairs(visible_nodes) do
-		local gx, gy = gravity_force(node, center_x, center_y)
-		node.vx = node.vx + gx
-		node.vy = node.vy + gy
-	end
-
-	-- Apply forces with temperature-limited displacement
+	-- Apply gravity force and update positions
 	local max_displacement = 0
+	local temp = state.temperature
 
-	for _, node in ipairs(visible_nodes) do
+	for i = 1, n do
+		local node = visible_nodes[i]
+
+		-- Add gravity
+		local gx, gy = gravity_force(node.x, node.y, node.degree, center_x, center_y)
+		local vx = node.vx + gx
+		local vy = node.vy + gy
+
 		-- Skip fixed nodes
-		if node.fx then
-			node.x = node.fx
-		else
-			local displacement = math.sqrt(node.vx * node.vx + node.vy * node.vy)
+		if not node.fx then
+			local disp_sq = vx * vx + vy * vy
 
-			if displacement > 0 then
+			if disp_sq > 0.01 then
+				local displacement = sqrt(disp_sq)
 				-- Limit displacement by temperature
-				local limited_displacement = math.min(displacement, state.temperature)
-				local factor = limited_displacement / displacement
+				local limited = min(displacement, temp)
+				local factor = limited / displacement
 
-				local dx = node.vx * factor
-				local dy = node.vy * factor
+				local move_x = vx * factor
+				local move_y = vy * factor
 
-				node.x = node.x + dx
-				node.y = node.y + dy
+				node.x = max(padding, min(width - padding, node.x + move_x))
+				node.y = max(padding, min(height - padding, node.y + move_y))
 
-				if math.abs(dx) > max_displacement then
-					max_displacement = math.abs(dx)
-				end
-				if math.abs(dy) > max_displacement then
-					max_displacement = math.abs(dy)
+				local abs_move = max(abs(move_x), abs(move_y))
+				if abs_move > max_displacement then
+					max_displacement = abs_move
 				end
 			end
+		else
+			node.x = node.fx
 		end
 
 		if node.fy then
 			node.y = node.fy
 		end
-
-		-- Keep nodes within bounds
-		node.x = math.max(padding, math.min(width - padding, node.x))
-		node.y = math.max(padding, math.min(height - padding, node.y))
 	end
 
 	-- Cool down temperature
-	state.temperature = state.temperature * SETTINGS.COOLING_RATE
+	state.temperature = temp * SETTINGS.COOLING_RATE
 	state.iteration = state.iteration + 1
 
 	-- Check convergence

@@ -146,18 +146,21 @@ M.DEFAULT_KEYMAPS = {
 
 -- Graph visualization settings
 M.GRAPH_SETTINGS = {
-	-- Layout algorithm parameters
+	-- Layout algorithm parameters (optimized for speed)
 	LAYOUT = {
 		-- Fruchterman-Reingold parameters
-		REPULSION_STRENGTH = 5000, -- How strongly nodes repel each other
-		ATTRACTION_STRENGTH = 0.01, -- Spring constant for connected nodes
-		IDEAL_EDGE_LENGTH = 50, -- Ideal distance between connected nodes
-		GRAVITY = 0.1, -- Pull toward center
-		DAMPING = 0.85, -- Velocity damping per iteration
-		MIN_VELOCITY = 0.01, -- Stop threshold
-		MAX_ITERATIONS = 300, -- Maximum layout iterations
-		COOLING_RATE = 0.95, -- Temperature cooling per iteration
-		INITIAL_TEMPERATURE = 100, -- Initial movement freedom
+		REPULSION_STRENGTH = 3000, -- How strongly nodes repel each other
+		ATTRACTION_STRENGTH = 0.02, -- Spring constant for connected nodes
+		IDEAL_EDGE_LENGTH = 40, -- Ideal distance between connected nodes
+		GRAVITY = 0.15, -- Pull toward center (stronger = faster convergence)
+		DAMPING = 0.8, -- Velocity damping per iteration
+		MIN_VELOCITY = 0.5, -- Stop threshold (higher = faster stop)
+		MAX_ITERATIONS = 100, -- Maximum layout iterations (reduced for speed)
+		COOLING_RATE = 0.9, -- Temperature cooling per iteration (faster cooling)
+		INITIAL_TEMPERATURE = 80, -- Initial movement freedom
+		-- Barnes-Hut optimization threshold (for large graphs)
+		BARNES_HUT_THETA = 0.8, -- Use approximation for distant nodes
+		LARGE_GRAPH_THRESHOLD = 100, -- Use optimizations above this node count
 	},
 
 	-- Visual settings

@@ -250,15 +250,25 @@ function M.setup(user_opts)
 			graph.refresh()
 		elseif arg == "animate" then
 			graph.open({ animate = true })
+		elseif arg == "rebuild" then
+			graph.open({ force_rebuild = true })
 		else
 			graph.open()
 		end
 	end, {
 		nargs = "?",
 		complete = function()
-			return { "close", "refresh", "animate" }
+			return { "close", "refresh", "animate", "rebuild" }
 		end,
 		desc = "Open Obsidian-style graph visualization of notes and links",
+	})
+
+	vim.api.nvim_create_user_command("IdeaGraphClearCache", function()
+		local cache = require("ideaDrop.ui.graph.cache")
+		cache.clear()
+		vim.notify("🗑️ Graph cache cleared", vim.log.levels.INFO)
+	end, {
+		desc = "Clear the graph cache to force full rebuild",
 	})
 
 	vim.api.nvim_create_user_command("IdeaGraphFilter", function(opts)

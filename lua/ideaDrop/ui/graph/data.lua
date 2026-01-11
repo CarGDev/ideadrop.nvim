@@ -2,8 +2,8 @@
 -- Graph data model: parses markdown files and builds node/edge structures
 
 local config = require("ideaDrop.core.config")
-local tags_module = require("ideaDrop.features.tags")
 local types = require("ideaDrop.ui.graph.types")
+local cache = require("ideaDrop.ui.graph.cache")
 
 ---@class GraphDataModule
 ---@field build_graph fun(): GraphData
@@ -89,9 +89,10 @@ function M.get_display_name(node_id)
 	return name:gsub("-", " "):gsub("^%l", string.upper)
 end
 
----Builds the complete graph from markdown files
+---Builds the complete graph from markdown files (using cache for speed)
+---@param force_rebuild boolean|nil Force cache rebuild
 ---@return GraphData
-function M.build_graph()
+function M.build_graph(force_rebuild)
 	-- Get idea_dir using the getter function if available, otherwise direct access
 	local idea_dir = config.get_idea_dir and config.get_idea_dir() or config.options.idea_dir
 	local graph = types.create_graph_data()
@@ -114,19 +115,10 @@ function M.build_graph()
 		return graph
 	end
 
-	-- Find all markdown files (try recursive first, then flat)
-	local glob_pattern = idea_dir .. "/**/*.md"
-	local files = vim.fn.glob(glob_pattern, false, true)
+	-- Build/update cache (only reads modified files)
+	local file_cache, updated, skipped = cache.build_cache(force_rebuild)
 
-	-- Fallback: try non-recursive if recursive finds nothing
-	if #files == 0 then
-		local files_flat = vim.fn.glob(idea_dir .. "/*.md", false, true)
-		if #files_flat > 0 then
-			files = files_flat
-		end
-	end
-
-	if #files == 0 then
+	if not file_cache or not file_cache.files or vim.tbl_isempty(file_cache.files) then
 		vim.notify(
 			string.format("📂 No .md files found in: %s", idea_dir),
 			vim.log.levels.WARN
@@ -134,9 +126,9 @@ function M.build_graph()
 		return graph
 	end
 
-	-- Build a map of normalized names to file paths for link resolution
+	-- Build file map for link resolution
 	local file_map = {}
-	for _, file_path in ipairs(files) do
+	for file_path, _ in pairs(file_cache.files) do
 		local normalized = M.normalize_file_name(file_path, idea_dir):lower()
 		file_map[normalized] = file_path
 
@@ -147,70 +139,65 @@ function M.build_graph()
 		end
 	end
 
-	-- First pass: create all nodes
-	for _, file_path in ipairs(files) do
+	-- First pass: create all nodes from cache
+	for file_path, file_data in pairs(file_cache.files) do
 		local node_id = M.normalize_file_name(file_path, idea_dir)
 		local display_name = M.get_display_name(node_id)
 
 		local node = types.create_node(node_id, display_name, file_path)
-
-		-- Extract tags from file
-		if vim.fn.filereadable(file_path) == 1 then
-			local content = vim.fn.readfile(file_path)
-			local content_str = table.concat(content, "\n")
-			node.tags = tags_module.extract_tags(content_str)
-		end
+		node.tags = file_data.tags or {}
 
 		graph.nodes[node_id] = node
-		table.insert(graph.node_list, node)
+		graph.node_list[#graph.node_list + 1] = node
 	end
 
-	-- Second pass: create edges from links
+	-- Second pass: create edges from cached links
 	local edge_set = {} -- Track unique edges (undirected)
 
-	for _, file_path in ipairs(files) do
-		if vim.fn.filereadable(file_path) == 1 then
-			local content = vim.fn.readfile(file_path)
-			local content_str = table.concat(content, "\n")
-			local links = M.extract_links(content_str)
+	for file_path, file_data in pairs(file_cache.files) do
+		local source_id = M.normalize_file_name(file_path, idea_dir)
+		local links = file_data.links or {}
 
-			local source_id = M.normalize_file_name(file_path, idea_dir)
+		for _, link_text in ipairs(links) do
+			local target_path = M.resolve_link(link_text, idea_dir, file_map)
 
-			for _, link_text in ipairs(links) do
-				local target_path = M.resolve_link(link_text, idea_dir, file_map)
+			if target_path then
+				local target_id = M.normalize_file_name(target_path, idea_dir)
 
-				if target_path then
-					local target_id = M.normalize_file_name(target_path, idea_dir)
+				-- Skip self-links
+				if source_id ~= target_id then
+					-- Create undirected edge key (sorted)
+					local edge_key
+					if source_id < target_id then
+						edge_key = source_id .. "|||" .. target_id
+					else
+						edge_key = target_id .. "|||" .. source_id
+					end
 
-					-- Skip self-links
-					if source_id ~= target_id then
-						-- Create undirected edge key (sorted)
-						local edge_key
-						if source_id < target_id then
-							edge_key = source_id .. "|||" .. target_id
-						else
-							edge_key = target_id .. "|||" .. source_id
+					-- Only add if not already exists
+					if not edge_set[edge_key] then
+						edge_set[edge_key] = true
+
+						local edge = types.create_edge(source_id, target_id)
+						graph.edges[#graph.edges + 1] = edge
+
+						-- Update degrees
+						if graph.nodes[source_id] then
+							graph.nodes[source_id].degree = graph.nodes[source_id].degree + 1
 						end
-
-						-- Only add if not already exists
-						if not edge_set[edge_key] then
-							edge_set[edge_key] = true
-
-							local edge = types.create_edge(source_id, target_id)
-							table.insert(graph.edges, edge)
-
-							-- Update degrees
-							if graph.nodes[source_id] then
-								graph.nodes[source_id].degree = graph.nodes[source_id].degree + 1
-							end
-							if graph.nodes[target_id] then
-								graph.nodes[target_id].degree = graph.nodes[target_id].degree + 1
-							end
+						if graph.nodes[target_id] then
+							graph.nodes[target_id].degree = graph.nodes[target_id].degree + 1
 						end
 					end
 				end
 			end
 		end
+	end
+
+	-- Show cache stats
+	local total = updated + skipped
+	if updated > 0 then
+		vim.notify(string.format("📊 Cache: %d updated, %d cached (%d total)", updated, skipped, total), vim.log.levels.INFO)
 	end
 
 	return graph
