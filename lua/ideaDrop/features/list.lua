@@ -11,7 +11,7 @@ local M = {}
 function M.list_all()
   local path = config.options.idea_dir
   -- Find all .md files recursively
-  local files = vim.fn.glob(path .. "**/*.md", false, true)
+  local files = vim.fn.glob(path .. "/**/*.md", false, true)
 
   if #files == 0 then
     vim.notify("📂 No idea files found", vim.log.levels.INFO)
@@ -21,7 +21,8 @@ function M.list_all()
   -- Present file selection UI
   vim.ui.select(files, { prompt = "📂 Select an idea file to open:" }, function(choice)
     if choice then
-      sidebar.open(choice) -- Open the selected file in sidebar
+      local filename = vim.fn.fnamemodify(choice, ":t")
+      sidebar.open(choice, filename, false) -- Open the selected file in sidebar
     end
   end)
 end

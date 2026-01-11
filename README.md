@@ -215,8 +215,12 @@ This plugin is built with:
 - **Lua**: Core functionality
 - **Neovim API**: Native Neovim integration
 - **nvim-tree**: File tree browsing
-- **telescope**: Search functionality
+- **vim.ui.select**: Native picker for search and tag selection
 - **Markdown**: Rich text support
+
+## 📋 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes.
 
 ## 📄 License
 
@@ -239,7 +243,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 1. **Module not found errors**: Ensure all dependencies are installed
 2. **Tree not opening**: Make sure nvim-tree is properly configured
-3. **Search not working**: Verify telescope is installed and configured
+3. **Search not working**: Verify your idea directory path is correct
 4. **Tags not showing**: Check that your idea directory exists and contains markdown files
 
 ### Getting Help

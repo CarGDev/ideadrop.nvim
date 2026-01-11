@@ -29,7 +29,7 @@ function M.open(file, filename, use_buffer)
 
 	-- Create a new buffer
 	local buf = vim.api.nvim_create_buf(false, true)
-	vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
+	vim.bo[buf].filetype = "markdown"
 
 	-- Calculate window dimensions (30% of screen width, 80% of screen height)
 	local width = math.floor(vim.o.columns * 0.3)
@@ -124,9 +124,9 @@ function M.open_right_side(file, filename)
 	-- Create buffer if it doesn't exist
 	if not right_side_buf or not vim.api.nvim_buf_is_valid(right_side_buf) then
 		right_side_buf = vim.api.nvim_create_buf(false, false)
-		vim.api.nvim_buf_set_option(right_side_buf, "filetype", "markdown")
-		vim.api.nvim_buf_set_option(right_side_buf, "buftype", "acwrite")
-		vim.api.nvim_buf_set_option(right_side_buf, "bufhidden", "hide")
+		vim.bo[right_side_buf].filetype = "markdown"
+		vim.bo[right_side_buf].buftype = "acwrite"
+		vim.bo[right_side_buf].bufhidden = "hide"
 		
 		-- Set up autosave for the right-side buffer
 		vim.api.nvim_create_autocmd("BufWriteCmd", {
@@ -190,11 +190,11 @@ function M.open_right_side(file, filename)
 		})
 
 		-- Set window options
-		vim.api.nvim_win_set_option(right_side_win, "wrap", true)
-		vim.api.nvim_win_set_option(right_side_win, "number", true)
-		vim.api.nvim_win_set_option(right_side_win, "relativenumber", false)
-		vim.api.nvim_win_set_option(right_side_win, "cursorline", true)
-		vim.api.nvim_win_set_option(right_side_win, "winhl", "Normal:Normal,FloatBorder:FloatBorder")
+		vim.wo[right_side_win].wrap = true
+		vim.wo[right_side_win].number = true
+		vim.wo[right_side_win].relativenumber = false
+		vim.wo[right_side_win].cursorline = true
+		vim.wo[right_side_win].winhl = "Normal:Normal,FloatBorder:FloatBorder"
 
 		-- Set up autosave on window close
 		vim.api.nvim_create_autocmd("WinClosed", {

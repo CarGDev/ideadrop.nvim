@@ -80,7 +80,7 @@ function M.get_all_tags()
 	local seen = {}
 	
 	-- Find all .md files recursively
-	local files = vim.fn.glob(idea_path .. "**/*.md", false, true)
+	local files = vim.fn.glob(idea_path .. "/**/*.md", false, true)
 	
 	for _, file in ipairs(files) do
 		if vim.fn.filereadable(file) == 1 then
@@ -203,7 +203,7 @@ function M.get_files_by_tag(tag)
 	local matching_files = {}
 	
 	-- Find all .md files recursively
-	local files = vim.fn.glob(idea_path .. "**/*.md", false, true)
+	local files = vim.fn.glob(idea_path .. "/**/*.md", false, true)
 	
 	for _, file in ipairs(files) do
 		if vim.fn.filereadable(file) == 1 then
@@ -264,7 +264,6 @@ function M.show_files_with_tag(tag)
 	-- Format file names for display
 	local file_choices = {}
 	for _, file in ipairs(files) do
-		local filename = vim.fn.fnamemodify(file, ":t")
 		local relative_path = file:sub(#config.options.idea_dir + 2) -- Remove idea_dir + "/"
 		table.insert(file_choices, relative_path)
 	end

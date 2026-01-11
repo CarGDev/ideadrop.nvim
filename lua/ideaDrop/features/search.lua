@@ -71,7 +71,7 @@ function M.fuzzy_search(query)
 	local results = {}
 	
 	-- Find all .md files recursively
-	local files = vim.fn.glob(idea_path .. "**/*.md", false, true)
+	local files = vim.fn.glob(idea_path .. "/**/*.md", false, true)
 	
 	for _, file in ipairs(files) do
 		if vim.fn.filereadable(file) == 1 then
@@ -199,7 +199,7 @@ function M.search_in_content(query)
 	local results = {}
 	
 	-- Find all .md files recursively
-	local files = vim.fn.glob(idea_path .. "**/*.md", false, true)
+	local files = vim.fn.glob(idea_path .. "/**/*.md", false, true)
 	
 	for _, file in ipairs(files) do
 		if vim.fn.filereadable(file) == 1 then
@@ -257,7 +257,7 @@ function M.search_by_title(query)
 	local results = {}
 	
 	-- Find all .md files recursively
-	local files = vim.fn.glob(idea_path .. "**/*.md", false, true)
+	local files = vim.fn.glob(idea_path .. "/**/*.md", false, true)
 	
 	for _, file in ipairs(files) do
 		if vim.fn.filereadable(file) == 1 then

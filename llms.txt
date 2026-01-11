@@ -1,0 +1,111 @@
+# ideaDrop.nvim - LLM Context
+
+> A Neovim plugin for capturing, organizing, and managing ideas with markdown support.
+
+## Project Overview
+
+ideaDrop.nvim is a Lua-based Neovim plugin that provides a distraction-free environment for note-taking and idea management. It features multiple view modes, a tagging system, and search capabilities.
+
+## Tech Stack
+
+- **Language**: Lua
+- **Platform**: Neovim (requires Neovim 0.8+)
+- **Dependencies**: nvim-tree/nvim-tree.lua, nvim-tree/nvim-web-devicons
+
+## Project Structure
+
+```
+ideaDrop.nvim/
+├── lua/ideaDrop/
+│   ├── init.lua           # Main entry point
+│   ├── core/
+│   │   ├── init.lua       # Core module with setup and commands
+│   │   └── config.lua     # Configuration management
+│   ├── ui/
+│   │   ├── sidebar.lua    # Floating/buffer/right-side window management
+│   │   └── tree.lua       # nvim-tree integration
+│   ├── features/
+│   │   ├── list.lua       # File listing functionality
+│   │   ├── tags.lua       # Tag extraction and management
+│   │   └── search.lua     # Fuzzy search implementation
+│   └── utils/
+│       ├── utils.lua      # Utility functions
+│       ├── keymaps.lua    # Keymap setup
+│       └── constants.lua  # Constants and defaults
+├── doc/
+│   └── ideaDrop.txt       # Vim help documentation
+├── README.md
+├── CONTRIBUTING.md
+├── CHANGELOG.md
+└── LICENSE
+```
+
+## Key Features
+
+1. **Multiple View Modes**
+   - Floating window (`:Idea`)
+   - Current buffer (`:IdeaBuffer`)
+   - Right-side persistent buffer (`:IdeaRight`)
+   - Tree browser (`:IdeaTree`)
+
+2. **Tagging System**
+   - Uses `#tag` format in markdown files
+   - Tag extraction, caching, and filtering
+   - Commands: `:IdeaTags`, `:IdeaAddTag`, `:IdeaRemoveTag`, `:IdeaSearchTag`
+
+3. **Search Functionality**
+   - Fuzzy search through titles and content
+   - Commands: `:IdeaSearch`, `:IdeaSearchContent`, `:IdeaSearchTitle`
+
+4. **Auto-save**
+   - Automatic saving on window close
+   - Uses `BufWriteCmd` autocmd for custom save handling
+
+## Configuration
+
+```lua
+require("ideaDrop").setup({
+  idea_dir = "/path/to/your/ideas", -- Directory for storing idea files
+})
+```
+
+## Code Conventions
+
+- Type annotations using LuaCATS/EmmyLua format (`---@param`, `---@return`, `---@class`)
+- Module pattern with local `M = {}` tables
+- Neovim API usage:
+  - `vim.bo[buf]` for buffer options
+  - `vim.wo[win]` for window options
+  - `vim.api.nvim_*` for other API calls
+- Error handling with `pcall` for optional dependencies
+- Notifications via `vim.notify()` with appropriate log levels
+
+## Important Implementation Details
+
+- **Glob patterns**: Must include `/` separator: `path .. "/**/*.md"`
+- **nvim-tree**: Use API directly (`require("nvim-tree.api")`) without calling `setup()` to preserve user config
+- **Buffer management**: Right-side buffer uses `buftype = "acwrite"` for custom save handling
+- **File paths**: Use `vim.fn.fnameescape()` for safe path handling
+
+## Commands Reference
+
+| Command | Description |
+|---------|-------------|
+| `:Idea [name]` | Open in floating window |
+| `:IdeaBuffer [name]` | Open in current buffer |
+| `:IdeaRight [name]` | Open in right-side buffer |
+| `:IdeaTree` | Open file tree browser |
+| `:IdeaTags` | Browse tags |
+| `:IdeaAddTag {tag}` | Add tag to current file |
+| `:IdeaRemoveTag {tag}` | Remove tag from current file |
+| `:IdeaSearchTag {tag}` | Search files by tag |
+| `:IdeaSearch {query}` | Fuzzy search all |
+| `:IdeaSearchContent {query}` | Search content only |
+| `:IdeaSearchTitle {query}` | Search titles only |
+
+## Development Notes
+
+- Help tags file at `doc/tags` is auto-generated
+- Uses `vim.ui.select()` for picker interfaces
+- Tag cache invalidation via `tag_cache_dirty` flag
+- Markdown files default template includes title and bullet point

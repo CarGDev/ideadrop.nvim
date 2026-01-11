@@ -3,33 +3,55 @@
 ==============================================================================
 INTRODUCTION                                        *ideaDrop-introduction*
 
-ideaDrop.nvim is a simple Neovim plugin that allows you to drop and organize
-your ideas in floating Markdown sidebars. It provides a clean and
-distraction-free interface for quick note-taking and idea organization.
+ideaDrop.nvim is a powerful Neovim plugin for capturing, organizing, and
+managing your ideas with multiple view modes, tagging system, and advanced
+search capabilities.
 
 ==============================================================================
 INSTALLATION                                        *ideaDrop-installation*
 
 Using lazy.nvim:
-
+>lua
     {
-      dir = "path/ideaDrop",
+      "CarGDev/ideadrop.nvim",
       name = "ideaDrop",
+      dependencies = {
+        "nvim-tree/nvim-tree.lua",
+        "nvim-tree/nvim-web-devicons",
+      },
       config = function()
         require("ideaDrop").setup({
-          idea_dir = "path/ideaDrop",
+          idea_dir = "/path/to/your/ideas",
         })
       end,
     }
+<
+
+Using packer:
+>lua
+    use {
+      "CarGDev/ideadrop.nvim",
+      requires = {
+        "nvim-tree/nvim-tree.lua",
+        "nvim-tree/nvim-web-devicons",
+      },
+      config = function()
+        require("ideaDrop").setup({
+          idea_dir = "/path/to/your/ideas",
+        })
+      end,
+    }
+<
 
 ==============================================================================
 CONFIGURATION                                       *ideaDrop-configuration*
 
 ideaDrop.nvim can be configured by passing a table to the setup function:
-
+>lua
     require("ideaDrop").setup({
-      idea_dir = "/path/to/your/ideas",  -- Directory to store idea files
+      idea_dir = "/path/to/your/ideas",
     })
+<
 
 OPTIONS                                             *ideaDrop-options*
 
@@ -40,37 +62,182 @@ idea_dir (string) ~
 ==============================================================================
 COMMANDS                                           *ideaDrop-commands*
 
+CORE COMMANDS ~
+
 :Idea                                              *:Idea*
     Opens today's idea file in a floating sidebar.
 
 :Idea {name}                                       *:Idea-name*
-    Opens or creates an idea file with the specified name.
+    Opens or creates an idea file with the specified name in floating window.
     Example: `:Idea project/vision`
 
 :Idea listAll                                      *:Idea-listAll*
-    Opens a fuzzy picker to select from existing ideas.
+    Opens a picker to select from existing ideas.
+
+:IdeaBuffer                                        *:IdeaBuffer*
+    Opens today's idea file in the current buffer.
+
+:IdeaBuffer {name}                                 *:IdeaBuffer-name*
+    Opens or creates an idea file in the current buffer.
+
+:IdeaRight                                         *:IdeaRight*
+    Opens today's idea file in a persistent right-side buffer.
+
+:IdeaRight {name}                                  *:IdeaRight-name*
+    Opens or creates an idea file in the right-side buffer.
+    Example: `:IdeaRight meetings/standup`
+
+:IdeaTree                                          *:IdeaTree*
+    Opens nvim-tree file browser focused on the idea directory.
+
+TAG COMMANDS ~
+
+:IdeaTags                                          *:IdeaTags*
+    Shows a tag picker to browse all tags and filter files by tag.
+
+:IdeaAddTag {tag}                                  *:IdeaAddTag*
+    Adds a tag to the current idea file.
+    Example: `:IdeaAddTag work`
+
+:IdeaRemoveTag {tag}                               *:IdeaRemoveTag*
+    Removes a tag from the current idea file.
+    Example: `:IdeaRemoveTag todo`
+
+:IdeaSearchTag {tag}                               *:IdeaSearchTag*
+    Searches for all files containing a specific tag.
+    Example: `:IdeaSearchTag project`
+
+SEARCH COMMANDS ~
+
+:IdeaSearch {query}                                *:IdeaSearch*
+    Fuzzy search through idea titles and content.
+    Example: `:IdeaSearch machine learning`
+
+:IdeaSearchContent {query}                         *:IdeaSearchContent*
+    Search only in idea content (not titles).
+    Example: `:IdeaSearchContent algorithm`
+
+:IdeaSearchTitle {query}                           *:IdeaSearchTitle*
+    Search only in idea file names/titles.
+    Example: `:IdeaSearchTitle project`
+
+==============================================================================
+KEYMAPS                                            *ideaDrop-keymaps*
+
+Buffer-local keymaps (in right-side buffer):
+
+<C-t>                                              Toggle tree view
+<C-r>                                              Refresh current file
+
+Suggested global keymaps (add to your config):
+>lua
+    vim.keymap.set("n", "<leader>id", ":IdeaRight<CR>", { desc = "Open today's idea" })
+    vim.keymap.set("n", "<leader>in", ":IdeaRight ", { desc = "Open named idea" })
+    vim.keymap.set("n", "<leader>it", ":IdeaTree<CR>", { desc = "Open idea tree" })
+    vim.keymap.set("n", "<leader>is", ":IdeaSearch ", { desc = "Search ideas" })
+    vim.keymap.set("n", "<leader>ig", ":IdeaTags<CR>", { desc = "Browse tags" })
+    vim.keymap.set("n", "<leader>if", ":Idea<CR>", { desc = "Open idea in float" })
+<
 
 ==============================================================================
 FEATURES                                           *ideaDrop-features*
 
-- Markdown editor in a floating sidebar
-- Automatic save on close
-- Date-based and custom named notes
-- Folder support (e.g., project/vision.md)
-- Fuzzy finder for existing ideas
-- Clean and distraction-free interface
+VIEW MODES ~
+
+1. Floating Window (`:Idea`)
+   - Opens ideas in a floating window
+   - Good for quick notes
+
+2. Current Buffer (`:IdeaBuffer`)
+   - Opens ideas in the current buffer
+   - Replaces current content
+
+3. Right-Side Buffer (`:IdeaRight`) - Recommended
+   - Persistent buffer on the right side
+   - Stays open while you work
+
+4. Tree Browser (`:IdeaTree`)
+   - Full file tree on the left side
+   - Uses nvim-tree integration
+
+TAGGING SYSTEM ~
+
+Tags use the `#tag` format in your markdown files:
+>markdown
+    # My Idea Title
+
+    This is my idea content.
+
+    #work #project-x #feature #todo
+<
+
+- Tags are automatically detected and indexed
+- Filter ideas by tags using `:IdeaTags`
+- Add/remove tags with `:IdeaAddTag` and `:IdeaRemoveTag`
+
+SEARCH FEATURES ~
+
+- Fuzzy search through titles and content
+- Real-time results as you type
+- Jump to specific lines in search results
+- Separate content and title search options
+
+AUTO-SAVE ~
+
+All changes are automatically saved when:
+- Closing a floating window
+- Writing the buffer (`:w`)
+- Closing the right-side window
 
 ==============================================================================
 EXAMPLES                                           *ideaDrop-examples*
 
-1. Open today's idea:
-    :Idea
+1. Open today's idea in right buffer:
+>vim
+    :IdeaRight
+<
 
-2. Create a new idea in a project folder:
-    :Idea project/nextgen
+2. Create a nested folder structure:
+>vim
+    :IdeaRight meetings/2024-01-15
+    :IdeaRight projects/app/features
+<
 
-3. List and select from existing ideas:
-    :Idea listAll
+3. Add tags to current idea:
+>vim
+    :IdeaAddTag work
+    :IdeaAddTag todo
+<
+
+4. Search for ideas:
+>vim
+    :IdeaSearch "machine learning"
+    :IdeaSearchContent "algorithm"
+<
+
+5. Browse and filter by tags:
+>vim
+    :IdeaTags
+<
 
 ==============================================================================
-vim:tw=78:ts=8:ft=help:norl: 
+TROUBLESHOOTING                                    *ideaDrop-troubleshooting*
+
+Common Issues ~
+
+1. Module not found errors
+   - Ensure all dependencies are installed (nvim-tree, nvim-web-devicons)
+
+2. Tree not opening
+   - Make sure nvim-tree is properly configured in your Neovim setup
+
+3. Tags not showing
+   - Check that your idea directory exists and contains markdown files
+   - Ensure tags use the `#tag` format
+
+4. Search not working
+   - Verify your idea directory path is correct
+   - Check that markdown files exist in the directory
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
