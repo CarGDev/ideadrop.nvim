@@ -5,6 +5,7 @@ local config = require("ideaDrop.core.config")
 -- UI modules
 local sidebar = require("ideaDrop.ui.sidebar")
 local tree = require("ideaDrop.ui.tree")
+local graph = require("ideaDrop.ui.graph")
 
 -- Feature modules
 local list = require("ideaDrop.features.list")
@@ -237,6 +238,75 @@ function M.setup(user_opts)
 	end, {
 		nargs = 1,
 		desc = "Search only in idea titles",
+	})
+
+	-- Graph visualization commands
+	vim.api.nvim_create_user_command("IdeaGraph", function(opts)
+		local arg = opts.args
+		
+		if arg == "close" then
+			graph.close()
+		elseif arg == "refresh" then
+			graph.refresh()
+		elseif arg == "animate" then
+			graph.open({ animate = true })
+		else
+			graph.open()
+		end
+	end, {
+		nargs = "?",
+		complete = function()
+			return { "close", "refresh", "animate" }
+		end,
+		desc = "Open Obsidian-style graph visualization of notes and links",
+	})
+
+	vim.api.nvim_create_user_command("IdeaGraphFilter", function(opts)
+		local args = vim.split(opts.args, " ", { trimempty = true })
+		
+		if #args < 2 then
+			vim.notify("Usage: :IdeaGraphFilter <tag|folder> <value>", vim.log.levels.ERROR)
+			return
+		end
+		
+		local filter_type = args[1]
+		local filter_value = args[2]
+		
+		if filter_type ~= "tag" and filter_type ~= "folder" then
+			vim.notify("Filter type must be 'tag' or 'folder'", vim.log.levels.ERROR)
+			return
+		end
+		
+		-- If graph is open, apply filter
+		if graph.is_open() then
+			local graph_data = graph.get_graph()
+			if graph_data then
+				local data_module = require("ideaDrop.ui.graph.data")
+				data_module.apply_filter(graph_data, filter_type, filter_value)
+				graph.refresh()
+			end
+		else
+			-- Open graph with filter
+			graph.open()
+			vim.defer_fn(function()
+				local graph_data = graph.get_graph()
+				if graph_data then
+					local data_module = require("ideaDrop.ui.graph.data")
+					data_module.apply_filter(graph_data, filter_type, filter_value)
+					graph.refresh()
+				end
+			end, 100)
+		end
+	end, {
+		nargs = "+",
+		complete = function(_, cmd_line, _)
+			local args = vim.split(cmd_line, " ", { trimempty = true })
+			if #args <= 2 then
+				return { "tag", "folder" }
+			end
+			return {}
+		end,
+		desc = "Filter graph by tag or folder",
 	})
 
 	-- Set up keymaps

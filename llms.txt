@@ -23,7 +23,13 @@ ideaDrop.nvim/
 │   │   └── config.lua     # Configuration management
 │   ├── ui/
 │   │   ├── sidebar.lua    # Floating/buffer/right-side window management
-│   │   └── tree.lua       # nvim-tree integration
+│   │   ├── tree.lua       # nvim-tree integration
+│   │   └── graph/         # Graph visualization module
+│   │       ├── init.lua   # Main graph module (window, keymaps, state)
+│   │       ├── types.lua  # Type definitions (GraphNode, GraphEdge, etc.)
+│   │       ├── data.lua   # Graph data model (link parsing, filtering)
+│   │       ├── layout.lua # Force-directed layout (Fruchterman-Reingold)
+│   │       └── renderer.lua # Character-based canvas renderer
 │   ├── features/
 │   │   ├── list.lua       # File listing functionality
 │   │   ├── tags.lua       # Tag extraction and management
@@ -47,6 +53,7 @@ ideaDrop.nvim/
    - Current buffer (`:IdeaBuffer`)
    - Right-side persistent buffer (`:IdeaRight`)
    - Tree browser (`:IdeaTree`)
+   - Graph visualization (`:IdeaGraph`)
 
 2. **Tagging System**
    - Uses `#tag` format in markdown files
@@ -61,11 +68,24 @@ ideaDrop.nvim/
    - Automatic saving on window close
    - Uses `BufWriteCmd` autocmd for custom save handling
 
+5. **Graph Visualization** (Obsidian-style)
+   - Force-directed layout using Fruchterman-Reingold algorithm
+   - Parses `[[Note Name]]` wiki-style links to build graph
+   - Visual encoding: node size = degree, colors = connectivity level
+   - Interactive filtering by tag/folder
+   - Commands: `:IdeaGraph`, `:IdeaGraphFilter`
+
 ## Configuration
 
 ```lua
 require("ideaDrop").setup({
   idea_dir = "/path/to/your/ideas", -- Directory for storing idea files
+  graph = {
+    animate = false,      -- Enable animated layout
+    show_orphans = true,  -- Show nodes without connections
+    show_labels = true,   -- Show node labels by default
+    node_colors = nil,    -- Custom colors by folder/tag
+  },
 })
 ```
 
@@ -102,6 +122,42 @@ require("ideaDrop").setup({
 | `:IdeaSearch {query}` | Fuzzy search all |
 | `:IdeaSearchContent {query}` | Search content only |
 | `:IdeaSearchTitle {query}` | Search titles only |
+| `:IdeaGraph [animate]` | Open graph visualization |
+| `:IdeaGraphFilter {type} {value}` | Filter graph by tag/folder |
+
+## Graph Implementation Details
+
+### Force-Directed Layout Algorithm
+
+The graph uses the Fruchterman-Reingold algorithm with these components:
+
+1. **Repulsion**: All nodes repel each other (`REPULSION_STRENGTH / distance²`)
+2. **Attraction**: Connected nodes attract via spring force (`ATTRACTION_STRENGTH * (distance - ideal_length)`)
+3. **Gravity**: Pulls toward center, inversely proportional to degree
+4. **Cooling**: Temperature decreases each iteration (`temp * COOLING_RATE`)
+5. **Convergence**: Stops when max displacement < `MIN_VELOCITY` or max iterations reached
+
+### Graph Data Model
+
+- **Nodes**: Created from each `.md` file, stores: id, name, file_path, folder, tags, degree, position (x,y), velocity
+- **Edges**: Created from `[[link]]` patterns, undirected (stored once per pair)
+- **Link Resolution**: Matches links to existing files using normalized names (case-insensitive, spaces→dashes)
+
+### Visual Encoding
+
+- Node size: `●` for high-degree, `•` for low-degree
+- Node colors: Blue (default), Purple (hubs, degree > 5), Gray (orphans), Red (selected)
+- Edges: `·` character with dim highlight
+
+### Key Constants (in `constants.lua`)
+
+```lua
+GRAPH_SETTINGS = {
+  LAYOUT = { REPULSION_STRENGTH = 5000, ATTRACTION_STRENGTH = 0.01, ... },
+  VISUAL = { NODE_CHAR = "●", EDGE_CHAR_SIMPLE = "·", ... },
+  WINDOW = { WIDTH_RATIO = 0.8, HEIGHT_RATIO = 0.8, ... },
+}
+```
 
 ## Development Notes
 
@@ -109,3 +165,6 @@ require("ideaDrop").setup({
 - Uses `vim.ui.select()` for picker interfaces
 - Tag cache invalidation via `tag_cache_dirty` flag
 - Markdown files default template includes title and bullet point
+- Graph uses character-based canvas with highlight groups for colors
+- Graph layout runs synchronously by default, optionally animated with `vim.defer_fn`
+- Graph filtering re-runs partial layout (fewer iterations) for smooth transitions

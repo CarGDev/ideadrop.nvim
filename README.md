@@ -8,6 +8,7 @@
 - 🏷️ **Smart Tagging System**: Add, remove, and filter ideas by tags
 - 🔍 **Advanced Search**: Fuzzy search through titles and content
 - 📁 **File Tree Browser**: Integrated nvim-tree for easy file navigation
+- 🕸️ **Graph Visualization**: Obsidian-style force-directed graph view of your notes
 - 📝 **Markdown Support**: Full markdown editing with syntax highlighting
 - 💾 **Auto-save**: Changes saved automatically
 - 📅 **Date-based Organization**: Automatic date-based file naming
@@ -56,12 +57,21 @@ use {
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `idea_dir` | string | `vim.fn.stdpath("data") .. "/ideaDrop"` | Directory where your idea files will be stored |
+| `graph.animate` | boolean | `false` | Enable animated graph layout |
+| `graph.show_orphans` | boolean | `true` | Show nodes without connections |
+| `graph.show_labels` | boolean | `true` | Show node labels by default |
+| `graph.node_colors` | table | `nil` | Custom colors by folder/tag |
 
 ### Example Configuration
 
 ```lua
 require("ideaDrop").setup({
   idea_dir = "/Users/carlos/Nextcloud/ObsidianVault",
+  graph = {
+    animate = false,      -- Set true for animated layout
+    show_orphans = true,  -- Show unconnected notes
+    show_labels = true,   -- Show note names
+  },
 })
 ```
 
@@ -96,6 +106,17 @@ require("ideaDrop").setup({
 | `:IdeaSearchContent query` | Search only in idea content |
 | `:IdeaSearchTitle query` | Search only in idea titles |
 
+### Graph Commands
+
+| Command | Description |
+|---------|-------------|
+| `:IdeaGraph` | Opens the Obsidian-style graph visualization |
+| `:IdeaGraph animate` | Opens graph with animated layout |
+| `:IdeaGraph refresh` | Refreshes the graph data |
+| `:IdeaGraph close` | Closes the graph window |
+| `:IdeaGraphFilter tag tagname` | Opens graph filtered by tag |
+| `:IdeaGraphFilter folder foldername` | Opens graph filtered by folder |
+
 ## ⌨️ Keymaps
 
 The plugin automatically sets up convenient keymaps:
@@ -108,6 +129,7 @@ The plugin automatically sets up convenient keymaps:
 | `<leader>is` | `:IdeaSearch ` | Search ideas |
 | `<leader>ig` | `:IdeaTags` | Browse tags |
 | `<leader>if` | `:Idea` | Open today's idea in float |
+| `<leader>iG` | `:IdeaGraph` | Open graph visualization |
 
 ## 🗂️ Usage Examples
 
@@ -143,6 +165,15 @@ The plugin automatically sets up convenient keymaps:
 :IdeaRight projects/app/features  " Organize by project and feature
 ```
 
+### Graph Visualization
+
+```vim
+:IdeaGraph                        " Open the graph view
+:IdeaGraph animate                " Open with animated layout
+:IdeaGraphFilter tag work         " Show only notes tagged #work
+:IdeaGraphFilter folder projects  " Show only notes in projects folder
+```
+
 ## 🏷️ Tagging System
 
 The plugin includes a powerful tagging system:
@@ -161,6 +192,57 @@ This is my idea content.
 
 #work #project-x #feature #todo
 ```
+
+## 🕸️ Graph Visualization
+
+The plugin includes an Obsidian-style graph view that visualizes the connections between your notes.
+
+### How It Works
+
+- **Nodes**: Each markdown file appears as a node
+- **Edges**: Internal links using `[[Note Name]]` syntax create connections
+- **Layout**: Uses Fruchterman-Reingold force-directed algorithm
+- **Positioning**: Highly connected nodes drift to center, orphans to periphery
+
+### Graph Keymaps (inside graph window)
+
+| Key | Action |
+|-----|--------|
+| `h/j/k/l` | Navigate between nodes |
+| `Enter` | Open selected note |
+| `t` | Filter by tag |
+| `f` | Filter by folder |
+| `r` | Reset filter |
+| `L` | Toggle labels |
+| `c` | Center graph |
+| `+/-` | Zoom in/out |
+| `?` | Toggle help |
+| `q/Esc` | Close graph |
+| `R` | Refresh graph |
+
+### Visual Encoding
+
+- **Node Size**: Scales with degree (number of connections)
+- **Node Color**:
+  - Blue: Normal nodes
+  - Purple: High-connectivity nodes (hubs)
+  - Gray: Orphan nodes (no connections)
+  - Red: Selected node
+- **Edges**: Thin, semi-transparent lines showing connections
+
+### Linking Notes
+
+To create links between notes, use wiki-style links in your markdown:
+
+```markdown
+# My Note
+
+This relates to [[Another Note]] and also to [[Projects/My Project]].
+
+Check out [[2024-01-15]] for more context.
+```
+
+The graph will automatically detect these links and create visual connections.
 
 ## 🔍 Search Features
 
@@ -209,6 +291,12 @@ The plugin integrates with nvim-tree for seamless file browsing:
 - Integrated with nvim-tree
 - Command: `:IdeaTree`
 
+### 5. Graph View
+- Obsidian-style force-directed graph
+- Visualizes note connections via `[[links]]`
+- Interactive filtering and navigation
+- Command: `:IdeaGraph`
+
 ## 🛠️ Development
 
 This plugin is built with:
@@ -245,6 +333,9 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 2. **Tree not opening**: Make sure nvim-tree is properly configured
 3. **Search not working**: Verify your idea directory path is correct
 4. **Tags not showing**: Check that your idea directory exists and contains markdown files
+5. **Graph showing no connections**: Make sure you're using `[[Note Name]]` syntax for links
+6. **Graph layout looks cramped**: Try zooming out with `-` or use `:IdeaGraph animate` for better initial layout
+7. **Graph is slow**: Large vaults (500+ notes) may take a moment to compute layout
 
 ### Getting Help
 
