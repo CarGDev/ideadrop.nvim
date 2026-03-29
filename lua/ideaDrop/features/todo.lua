@@ -75,7 +75,9 @@ function M.toggle_item()
 	local cursor = vim.api.nvim_win_get_cursor(todo_win or 0)
 	local row = cursor[1] - 1 -- 0-indexed
 	local line = vim.api.nvim_buf_get_lines(todo_buf, row, row + 1, false)[1]
-	if not line then return end
+	if not line then
+		return
+	end
 
 	local new_line
 	if line:match("%- %[ %]") then
@@ -120,7 +122,9 @@ function M.remove_item()
 	local cursor = vim.api.nvim_win_get_cursor(todo_win or 0)
 	local row = cursor[1] - 1
 	local line = vim.api.nvim_buf_get_lines(todo_buf, row, row + 1, false)[1]
-	if not line then return end
+	if not line then
+		return
+	end
 
 	-- Only remove checkbox lines
 	if line:match("^%s*%- %[.%]") then
@@ -135,46 +139,82 @@ local function setup_keymaps(buf)
 	local kopts = { noremap = true, silent = true }
 
 	-- Toggle checkbox with <CR> or <Space>
-	vim.api.nvim_buf_set_keymap(buf, "n", "<CR>", "", vim.tbl_extend("force", kopts, {
-		callback = function() M.toggle_item() end,
-		desc = "Toggle todo checkbox",
-	}))
-	vim.api.nvim_buf_set_keymap(buf, "n", "<Space>", "", vim.tbl_extend("force", kopts, {
-		callback = function() M.toggle_item() end,
-		desc = "Toggle todo checkbox",
-	}))
+	vim.api.nvim_buf_set_keymap(
+		buf,
+		"n",
+		"<CR>",
+		"",
+		vim.tbl_extend("force", kopts, {
+			callback = function()
+				M.toggle_item()
+			end,
+			desc = "Toggle todo checkbox",
+		})
+	)
+	vim.api.nvim_buf_set_keymap(
+		buf,
+		"n",
+		"<Space>",
+		"",
+		vim.tbl_extend("force", kopts, {
+			callback = function()
+				M.toggle_item()
+			end,
+			desc = "Toggle todo checkbox",
+		})
+	)
 
 	-- Add new item with 'o'
-	vim.api.nvim_buf_set_keymap(buf, "n", "o", "", vim.tbl_extend("force", kopts, {
-		callback = function()
-			M.add_item("")
-			-- Enter insert mode at end of line
-			vim.cmd("startinsert!")
-		end,
-		desc = "Add new todo item",
-	}))
+	vim.api.nvim_buf_set_keymap(
+		buf,
+		"n",
+		"o",
+		"",
+		vim.tbl_extend("force", kopts, {
+			callback = function()
+				M.add_item("")
+				-- Enter insert mode at end of line
+				vim.cmd("startinsert!")
+			end,
+			desc = "Add new todo item",
+		})
+	)
 
 	-- Remove item with 'dd' on checkbox lines
-	vim.api.nvim_buf_set_keymap(buf, "n", "dd", "", vim.tbl_extend("force", kopts, {
-		callback = function()
-			local cursor = vim.api.nvim_win_get_cursor(0)
-			local row = cursor[1] - 1
-			local line = vim.api.nvim_buf_get_lines(buf, row, row + 1, false)[1]
-			if line and line:match("^%s*%- %[.%]") then
-				M.remove_item()
-			else
-				-- Fallback to normal dd for non-checkbox lines
-				vim.api.nvim_feedkeys("\"_dd", "n", false)
-			end
-		end,
-		desc = "Remove todo item",
-	}))
+	vim.api.nvim_buf_set_keymap(
+		buf,
+		"n",
+		"dd",
+		"",
+		vim.tbl_extend("force", kopts, {
+			callback = function()
+				local cursor = vim.api.nvim_win_get_cursor(0)
+				local row = cursor[1] - 1
+				local line = vim.api.nvim_buf_get_lines(buf, row, row + 1, false)[1]
+				if line and line:match("^%s*%- %[.%]") then
+					M.remove_item()
+				else
+					-- Fallback to normal dd for non-checkbox lines
+					vim.api.nvim_feedkeys('"_dd', "n", false)
+				end
+			end,
+			desc = "Remove todo item",
+		})
+	)
 
 	-- Close with q
-	vim.api.nvim_buf_set_keymap(buf, "n", "q", "", vim.tbl_extend("force", kopts, {
-		callback = function() M.close() end,
-		desc = "Close todo panel",
-	}))
+	vim.api.nvim_buf_set_keymap(
+		buf,
+		"n",
+		"q",
+		"",
+		vim.tbl_extend("force", kopts, {
+			callback = function()
+				M.close()
+			end,
+			desc = "Close todo panel",
+		})
+	)
 end
 
 ---Opens the todo list in a fixed right-side split
