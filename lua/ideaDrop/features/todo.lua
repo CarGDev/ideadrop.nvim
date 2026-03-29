@@ -19,7 +19,8 @@ local todo_win = nil
 ---@return string
 local function get_todo_file()
 	local idea_dir = config.options.idea_dir
-	return idea_dir .. "/.todo.md"
+	local filename = config.options.todo and config.options.todo.file or ".todo.md"
+	return idea_dir .. "/" .. filename
 end
 
 ---Creates default todo content
@@ -254,7 +255,8 @@ function M.open()
 	vim.cmd("botright vsplit")
 	todo_win = vim.api.nvim_get_current_win()
 
-	local width = math.floor(vim.o.columns * 0.25)
+	local width_ratio = config.options.todo and config.options.todo.width or 0.25
+	local width = math.floor(vim.o.columns * width_ratio)
 	vim.api.nvim_win_set_width(todo_win, width)
 	vim.api.nvim_win_set_buf(todo_win, todo_buf)
 

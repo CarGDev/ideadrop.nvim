@@ -1,6 +1,7 @@
 -- ideaDrop/ui/sidebar.lua
 local config = require("ideaDrop.core.config")
 local tree = require("ideaDrop.ui.tree")
+local obsidian = require("ideaDrop.integrations.obsidian")
 
 ---@class Sidebar
 ---@field open fun(file: string|nil, filename: string|nil, use_buffer: boolean|nil): nil
@@ -162,6 +163,11 @@ function M.open_right_side(file, filename)
 				end,
 			})
 		)
+
+		-- Set up obsidian.nvim keymaps if enabled
+		if config.options.obsidian and config.options.obsidian.enabled and config.options.obsidian.auto_keymaps then
+			obsidian.setup_buf_keymaps(right_side_buf)
+		end
 	end
 
 	-- Set the buffer in the window

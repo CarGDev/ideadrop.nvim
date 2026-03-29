@@ -1,4 +1,4 @@
-.PHONY: lint format format-check docs clean check-deps
+.PHONY: lint format format-check docs test clean check-deps
 
 lint:
 	luacheck lua/
@@ -9,11 +9,14 @@ format:
 format-check:
 	stylua --check lua/
 
+test:
+	nvim --headless --clean -u ./scripts/test.lua
+
 docs:
 	nvim --headless -c "helptags doc/" -c "qa"
 
 clean:
-	rm -rf .luacache/
+	rm -rf .luacache/ .dependencies/
 	find . -name "*.orig" -delete
 
 check-deps:

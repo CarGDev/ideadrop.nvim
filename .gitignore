@@ -1,10 +1,8 @@
 # Lua bytecode (just in case)
 *.luac
 
-# Ignore test directories but not test-related source files
-tests/
-*_test.lua
-*_spec.lua
+# Test dependencies (auto-downloaded)
+.dependencies/
 # OS junk
 .DS_Store
 Thumbs.db
@@ -26,3 +24,6 @@ site/
 
 # Ignore user's idea storage directory (don't commit personal files)
 .ideaDrop/
+
+# Codetyper.nvim - AI coding partner files
+.codetyper/
