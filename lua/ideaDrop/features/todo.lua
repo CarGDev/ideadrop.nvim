@@ -266,6 +266,27 @@ function M.open()
 	vim.wo[todo_win].relativenumber = false
 	vim.wo[todo_win].cursorline = true
 	vim.wo[todo_win].winfixwidth = true
+	-- Prevent other buffers from opening in this window
+	if vim.fn.has("nvim-0.10") == 1 then
+		vim.wo[todo_win].winfixbuf = true
+	else
+		vim.api.nvim_create_autocmd("BufWinEnter", {
+			callback = function()
+				if todo_win and vim.api.nvim_win_is_valid(todo_win) then
+					local cur_win = vim.api.nvim_get_current_win()
+					if cur_win == todo_win then
+						local cur_buf = vim.api.nvim_win_get_buf(todo_win)
+						if cur_buf ~= todo_buf then
+							vim.cmd("wincmd p")
+							vim.api.nvim_win_set_buf(todo_win, todo_buf)
+						end
+					end
+				else
+					return true -- delete autocmd when window is gone
+				end
+			end,
+		})
+	end
 	vim.wo[todo_win].signcolumn = "no"
 	vim.wo[todo_win].foldcolumn = "0"
 	vim.wo[todo_win].statusline = "%#StatusLine# Todo %=%l/%L "

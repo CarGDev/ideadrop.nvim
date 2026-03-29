@@ -184,6 +184,28 @@ function M.open_right_side(file, filename)
 	vim.wo[right_side_win].relativenumber = false
 	vim.wo[right_side_win].cursorline = true
 	vim.wo[right_side_win].winfixwidth = true
+	-- Prevent other buffers from opening in this window
+	if vim.fn.has("nvim-0.10") == 1 then
+		vim.wo[right_side_win].winfixbuf = true
+	else
+		vim.api.nvim_create_autocmd("BufWinEnter", {
+			callback = function()
+				if right_side_win and vim.api.nvim_win_is_valid(right_side_win) then
+					local cur_win = vim.api.nvim_get_current_win()
+					if cur_win == right_side_win then
+						local cur_buf = vim.api.nvim_win_get_buf(right_side_win)
+						if cur_buf ~= right_side_buf then
+							-- Move the intruding buffer to a previous window and restore ours
+							vim.cmd("wincmd p")
+							vim.api.nvim_win_set_buf(right_side_win, right_side_buf)
+						end
+					end
+				else
+					return true -- delete autocmd when window is gone
+				end
+			end,
+		})
+	end
 
 	-- Save on window close
 	vim.api.nvim_create_autocmd("WinClosed", {

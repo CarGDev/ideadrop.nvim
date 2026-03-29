@@ -5,7 +5,15 @@ All notable changes to ideaDrop.nvim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.1.0] - 2026-03-29
+
+### Fixed
+
+- Idea sidebar and todo panel no longer hijack file opens — uses `winfixbuf` on
+  Neovim 0.10+ and a `BufWinEnter` fallback on older versions so `:edit`, `gf`,
+  and plugin navigations always open in the main editor window
+
+## [2.0.0]
 
 ### Added
 
