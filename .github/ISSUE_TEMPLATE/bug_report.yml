@@ -1,0 +1,71 @@
+name: Bug Report
+description: Report a bug in ideaDrop.nvim
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: To reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Open Neovim
+        2. Run command ':Idea'
+        3. ...
+        4. See error
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+
+  - type: textarea
+    id: installation
+    attributes:
+      label: Installation method
+      description: How did you install the plugin?
+      value: |
+        ```lua
+        {
+          "CarGDev/ideadrop.nvim",
+          dependencies = {
+            "nvim-tree/nvim-tree.lua",
+            "nvim-tree/nvim-web-devicons",
+          },
+          config = function()
+            require("ideaDrop").setup({
+              idea_dir = "/path/to/ideas",
+            })
+          end,
+        }
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: "Neovim version, OS, terminal, etc."
+      placeholder: |
+        - Neovim: v0.10.0
+        - OS: macOS 15
+        - Terminal: WezTerm
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction script
+      description: A minimal Lua script that reproduces the issue.
+      render: lua

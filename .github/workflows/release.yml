@@ -2,20 +2,57 @@ name: Release
 
 on:
   push:
-    branches: [master]
-  workflow_dispatch:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   release:
-    name: release
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
-        id: release
+      - uses: actions/checkout@v4
         with:
-          release-type: simple
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          semver="${version#v}"
+          body=$(awk -v ver="$semver" '
+            /^## \[/ {
+              if (found) exit
+              if (index($0, ver)) found=1; next
+            }
+            found { print }
+          ' CHANGELOG.md)
+          if [ -z "$body" ]; then
+            body="Release $version"
+          fi
+          echo "$body" > /tmp/release_body.md
+
+      - name: Setup Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      - name: Generate help tags
+        run: |
+          mkdir -p doc
+          nvim --headless -c "helptags doc/" -c "qa" 2>/dev/null || true
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          name: "ideaDrop.nvim ${{ steps.version.outputs.version }}"
+          bodyFile: /tmp/release_body.md
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          draft: false
           token: ${{ secrets.GITHUB_TOKEN }}

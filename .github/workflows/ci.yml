@@ -3,28 +3,72 @@ name: CI
 on:
   push:
     branches: [master]
+    paths:
+      - "lua/**"
+      - "plugin/**"
+      - ".stylua.toml"
+      - ".luacheckrc"
+      - ".github/workflows/**"
   pull_request:
     branches: [master]
-  workflow_dispatch:
+    paths:
+      - "lua/**"
+      - "plugin/**"
+      - ".stylua.toml"
+      - ".luacheckrc"
+      - ".github/workflows/**"
 
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stylua
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: lua/
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: auto-format with stylua"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
+          commit_author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Stylua
-        uses: JohnnyMorganz/stylua-action@v3
+      - uses: leafo/gh-actions-lua@v11
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          version: latest
-          args: --check .
+          luaVersion: "5.1"
+      - uses: leafo/gh-actions-luarocks@v5
+      - name: Install luacheck
+        run: luarocks install luacheck
+      - name: Run luacheck
+        run: luacheck lua/
+
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+      - name: Verify plugin loads
+        run: |
+          nvim --headless -u NONE -c "set rtp+=." -c "lua require('ideaDrop')" -c "qa!" 2>&1
 
   docs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    name: pandoc to vimdoc
-    if: ${{ github.ref == 'refs/heads/master' }}
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
         with:

@@ -1,0 +1,24 @@
+name: Feature Request
+description: Suggest a new feature for ideaDrop.nvim
+title: "feature: "
+labels: ["new-feature", "enhancement"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature description
+      description: A clear and concise description of what you'd like.
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this feature needed? What problem does it solve?
+
+  - type: textarea
+    id: other
+    attributes:
+      label: Additional context
+      description: Any other context, mockups, or references.
