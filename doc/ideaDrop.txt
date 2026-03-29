@@ -1,16 +1,50 @@
-*ideaDrop.txt*    ideaDrop.nvim plugin for Neovim
+*ideaDrop.txt*            For NVIM v0.8.0           Last change: 2026 March 29
 
 ==============================================================================
-INTRODUCTION                                        *ideaDrop-introduction*
+Table of Contents                                 *ideaDrop-table-of-contents*
 
-ideaDrop.nvim is a powerful Neovim plugin for capturing, organizing, and
-managing your ideas with multiple view modes, tagging system, and advanced
-search capabilities.
+1. ideaDrop.nvim                                      |ideaDrop-ideadrop.nvim|
+  - Features                                               |ideaDrop-features|
+  - Installation                                       |ideaDrop-installation|
+  - Configuration                                     |ideaDrop-configuration|
+  - Commands                                               |ideaDrop-commands|
+  - Todo List                                             |ideaDrop-todo-list|
+  - Obsidian.nvim Integration             |ideaDrop-obsidian.nvim-integration|
+  - Graph Visualization                         |ideaDrop-graph-visualization|
+  - Usage Examples                                   |ideaDrop-usage-examples|
+  - Changelog                                             |ideaDrop-changelog|
+  - License                                                 |ideaDrop-license|
+  - Contributing                                       |ideaDrop-contributing|
+  - Troubleshooting                                 |ideaDrop-troubleshooting|
 
 ==============================================================================
-INSTALLATION                                        *ideaDrop-installation*
+1. ideaDrop.nvim                                      *ideaDrop-ideadrop.nvim*
 
-Using lazy.nvim:
+A Neovim plugin for capturing, organizing, and managing ideas inside an
+Obsidian-compatible vault with graph visualization, tagging, search, and
+project todo lists.
+
+
+FEATURES                                                   *ideaDrop-features*
+
+- **Right-Side Split Panel**: Notes open in a fixed split on the right side of your editor
+- **Project Todo List**: Toggle a todo panel with checkbox toggling (`[ ]` / `[x]`)
+- **Obsidian.nvim Integration**: Optional deep integration with obsidian.nvim for backlinks, search, renaming, and more
+- **Smart Tagging System**: Add, remove, and filter ideas by `#tags`
+- **Advanced Search**: Fuzzy search through titles and content
+- **File Tree Browser**: Integrated nvim-tree for file navigation
+- **Graph Visualization**: Obsidian-style force-directed graph view of `[[linked notes]]`
+- **Markdown Support**: Full markdown editing with syntax highlighting
+- **Auto-save**: Changes saved automatically on write and window close
+- **Date-based Organization**: Automatic date-based file naming
+- **Folder Support**: Nested organization with subdirectories
+
+
+INSTALLATION                                           *ideaDrop-installation*
+
+
+USING LAZY.NVIM ~
+
 >lua
     {
       "CarGDev/ideadrop.nvim",
@@ -18,16 +52,20 @@ Using lazy.nvim:
       dependencies = {
         "nvim-tree/nvim-tree.lua",
         "nvim-tree/nvim-web-devicons",
+        -- Optional: for enhanced vault features
+        -- "epwalsh/obsidian.nvim",
       },
       config = function()
         require("ideaDrop").setup({
-          idea_dir = "/path/to/your/ideas",
+          idea_dir = "/path/to/your/obsidian/vault",
         })
       end,
     }
 <
 
-Using packer:
+
+USING PACKER ~
+
 >lua
     use {
       "CarGDev/ideadrop.nvim",
@@ -43,201 +81,291 @@ Using packer:
     }
 <
 
-==============================================================================
-CONFIGURATION                                       *ideaDrop-configuration*
 
-ideaDrop.nvim can be configured by passing a table to the setup function:
+CONFIGURATION                                         *ideaDrop-configuration*
+
 >lua
     require("ideaDrop").setup({
-      idea_dir = "/path/to/your/ideas",
+      idea_dir = "/Users/carlos/Nextcloud/ObsidianVault",
+      graph = {
+        animate = false,      -- Set true for animated layout
+        show_orphans = true,  -- Show unconnected notes
+        show_labels = true,   -- Show note names
+        node_colors = nil,    -- Custom colors by folder/tag
+      },
+      todo = {
+        file = ".todo.md",    -- Todo filename in idea_dir
+        width = 0.25,         -- Panel width (25% of screen)
+      },
+      obsidian = {
+        enabled = true,       -- Enable obsidian.nvim integration
+        auto_keymaps = true,  -- Set up obsidian keymaps on idea buffers
+      },
     })
 <
 
-OPTIONS                                             *ideaDrop-options*
+  -----------------------------------------------------------------------------------------------------
+  Option                  Type        Default                                 Description
+  ----------------------- ----------- --------------------------------------- -------------------------
+  idea_dir                string      vim.fn.stdpath("data") .. "/ideaDrop"   Directory where files are
+                                                                              stored
 
-idea_dir (string) ~
-    Default: vim.fn.stdpath("data") .. "/ideaDrop"
-    Directory where your idea files will be stored.
+  graph.animate           boolean     false                                   Enable animated graph
+                                                                              layout
 
-==============================================================================
-COMMANDS                                           *ideaDrop-commands*
+  graph.show_orphans      boolean     true                                    Show nodes without
+                                                                              connections
+
+  graph.show_labels       boolean     true                                    Show node labels by
+                                                                              default
+
+  graph.node_colors       table       nil                                     Custom colors by
+                                                                              folder/tag
+
+  todo.file               string      ".todo.md"                              Todo list filename
+
+  todo.width              number      0.25                                    Todo panel width ratio
+
+  obsidian.enabled        boolean     true                                    Enable obsidian.nvim
+                                                                              integration
+
+  obsidian.auto_keymaps   boolean     true                                    Auto-set obsidian keymaps
+                                                                              on buffers
+  -----------------------------------------------------------------------------------------------------
+
+COMMANDS                                                   *ideaDrop-commands*
+
 
 CORE COMMANDS ~
 
-:Idea                                              *:Idea*
-    Opens today's idea file in a floating sidebar.
+  -----------------------------------------------------------------------
+  Command                       Description
+  ----------------------------- -----------------------------------------
+  :Idea [name]                  Open today’s idea (or named idea) in
+                                right-side split
 
-:Idea {name}                                       *:Idea-name*
-    Opens or creates an idea file with the specified name in floating window.
-    Example: `:Idea project/vision`
+  :IdeaBuffer [name]            Open idea in current buffer
 
-:Idea listAll                                      *:Idea-listAll*
-    Opens a picker to select from existing ideas.
+  :IdeaRight [name]             Alias for :Idea
 
-:IdeaBuffer                                        *:IdeaBuffer*
-    Opens today's idea file in the current buffer.
+  :IdeaClose                    Close the right-side panel
 
-:IdeaBuffer {name}                                 *:IdeaBuffer-name*
-    Opens or creates an idea file in the current buffer.
+  :IdeaToggle                   Toggle the right-side panel
 
-:IdeaRight                                         *:IdeaRight*
-    Opens today's idea file in a persistent right-side buffer.
+  :IdeaTree                     Open nvim-tree file browser
+  -----------------------------------------------------------------------
 
-:IdeaRight {name}                                  *:IdeaRight-name*
-    Opens or creates an idea file in the right-side buffer.
-    Example: `:IdeaRight meetings/standup`
+TODO COMMANDS ~
 
-:IdeaTree                                          *:IdeaTree*
-    Opens nvim-tree file browser focused on the idea directory.
+  Command               Description
+  --------------------- ------------------------------------
+  :IdeaTodo             Toggle the project todo list panel
+  :IdeaTodoAdd [text]   Add a new todo item
 
 TAG COMMANDS ~
 
-:IdeaTags                                          *:IdeaTags*
-    Shows a tag picker to browse all tags and filter files by tag.
-
-:IdeaAddTag {tag}                                  *:IdeaAddTag*
-    Adds a tag to the current idea file.
-    Example: `:IdeaAddTag work`
-
-:IdeaRemoveTag {tag}                               *:IdeaRemoveTag*
-    Removes a tag from the current idea file.
-    Example: `:IdeaRemoveTag todo`
-
-:IdeaSearchTag {tag}                               *:IdeaSearchTag*
-    Searches for all files containing a specific tag.
-    Example: `:IdeaSearchTag project`
+  Command              Description
+  -------------------- ------------------------------------------
+  :IdeaTags            Shows tag picker to browse files by tag
+  :IdeaAddTag tag      Adds a tag to the current idea file
+  :IdeaRemoveTag tag   Removes a tag from the current idea file
+  :IdeaSearchTag tag   Searches for files with a specific tag
 
 SEARCH COMMANDS ~
 
-:IdeaSearch {query}                                *:IdeaSearch*
-    Fuzzy search through idea titles and content.
-    Example: `:IdeaSearch machine learning`
+  Command                    Description
+  -------------------------- -----------------------------------------
+  :IdeaSearch query          Fuzzy search through titles and content
+  :IdeaSearchContent query   Search only in content
+  :IdeaSearchTitle query     Search only in titles
 
-:IdeaSearchContent {query}                         *:IdeaSearchContent*
-    Search only in idea content (not titles).
-    Example: `:IdeaSearchContent algorithm`
+GRAPH COMMANDS ~
 
-:IdeaSearchTitle {query}                           *:IdeaSearchTitle*
-    Search only in idea file names/titles.
-    Example: `:IdeaSearchTitle project`
+  Command                        Description
+  ------------------------------ ---------------------------------
+  :IdeaGraph                     Open the graph visualization
+  :IdeaGraph animate             Open graph with animated layout
+  :IdeaGraph refresh             Refresh graph data
+  :IdeaGraph close               Close the graph window
+  :IdeaGraphFilter tag name      Filter graph by tag
+  :IdeaGraphFilter folder name   Filter graph by folder
+  :IdeaGraphClearCache           Clear graph cache
 
-==============================================================================
-KEYMAPS                                            *ideaDrop-keymaps*
+OBSIDIAN COMMANDS ~
 
-Buffer-local keymaps (in right-side buffer):
+  Command                   Description
+  ------------------------- ---------------------------------
+  :IdeaObsidian backlinks   Show backlinks for current note
+  :IdeaObsidian search      Search vault with obsidian.nvim
+  :IdeaObsidian daily       Open today’s daily note
+  :IdeaObsidian new         Create a new note
+  :IdeaObsidian switch      Quick switcher
+  :IdeaObsidian tags        Browse tags via obsidian.nvim
+  :IdeaObsidian paste       Paste image from clipboard
+  :IdeaObsidian rename      Rename note (updates backlinks)
+  :IdeaObsidian open        Open in Obsidian app
+  :IdeaObsidian status      Show integration status
 
-<C-t>                                              Toggle tree view
-<C-r>                                              Refresh current file
+TODO LIST                                                 *ideaDrop-todo-list*
 
-Suggested global keymaps (add to your config):
->lua
-    vim.keymap.set("n", "<leader>id", ":IdeaRight<CR>", { desc = "Open today's idea" })
-    vim.keymap.set("n", "<leader>in", ":IdeaRight ", { desc = "Open named idea" })
-    vim.keymap.set("n", "<leader>it", ":IdeaTree<CR>", { desc = "Open idea tree" })
-    vim.keymap.set("n", "<leader>is", ":IdeaSearch ", { desc = "Search ideas" })
-    vim.keymap.set("n", "<leader>ig", ":IdeaTags<CR>", { desc = "Browse tags" })
-    vim.keymap.set("n", "<leader>if", ":Idea<CR>", { desc = "Open idea in float" })
-<
+The todo list opens as a fixed panel on the right side of your editor. It
+persists as `.todo.md` in your idea directory.
 
-==============================================================================
-FEATURES                                           *ideaDrop-features*
 
-VIEW MODES ~
+KEYMAPS (INSIDE TODO PANEL) ~
 
-1. Floating Window (`:Idea`)
-   - Opens ideas in a floating window
-   - Good for quick notes
+  Key               Action
+  ----------------- ---------------------------
+  <CR> or <Space>   Toggle checkbox
+  o                 Add new item below cursor
+  dd                Remove checkbox item
+  q                 Close panel
 
-2. Current Buffer (`:IdeaBuffer`)
-   - Opens ideas in the current buffer
-   - Replaces current content
+EXAMPLE ~
 
-3. Right-Side Buffer (`:IdeaRight`) - Recommended
-   - Persistent buffer on the right side
-   - Stays open while you work
-
-4. Tree Browser (`:IdeaTree`)
-   - Full file tree on the left side
-   - Uses nvim-tree integration
-
-TAGGING SYSTEM ~
-
-Tags use the `#tag` format in your markdown files:
 >markdown
-    # My Idea Title
-
-    This is my idea content.
-
-    #work #project-x #feature #todo
+    # Todo
+    
+    - [x] Set up project structure
+    - [x] Add search functionality
+    - [ ] Write tests for graph module
+    - [ ] Update deployment docs
 <
 
-- Tags are automatically detected and indexed
-- Filter ideas by tags using `:IdeaTags`
-- Add/remove tags with `:IdeaAddTag` and `:IdeaRemoveTag`
 
-SEARCH FEATURES ~
+OBSIDIAN.NVIM INTEGRATION                 *ideaDrop-obsidian.nvim-integration*
 
-- Fuzzy search through titles and content
-- Real-time results as you type
-- Jump to specific lines in search results
-- Separate content and title search options
+When `epwalsh/obsidian.nvim` is installed, ideaDrop automatically detects it
+and provides enhanced features:
 
-AUTO-SAVE ~
+- **Link following**: `gf` on `[[wiki-links]]` uses obsidian.nvim’s resolver
+- **Backlinks**: `<leader>ob` shows all notes linking to the current one
+- **Search**: `<leader>os` uses obsidian.nvim’s search
+- **New notes**: `<leader>on` creates notes with obsidian.nvim templates
+- **Open in Obsidian**: `<leader>oo` opens the note in the Obsidian desktop app
+- **Rename**: `<leader>or` renames notes and updates all backlinks
+- **Paste images**: `<leader>op` pastes clipboard images with proper paths
+- **Quick switch**: `<leader>oq` opens the quick switcher
 
-All changes are automatically saved when:
-- Closing a floating window
-- Writing the buffer (`:w`)
-- Closing the right-side window
+If obsidian.nvim is not installed, all features work standalone using
+ideaDrop’s built-in capabilities.
 
-==============================================================================
-EXAMPLES                                           *ideaDrop-examples*
 
-1. Open today's idea in right buffer:
+GRAPH VISUALIZATION                             *ideaDrop-graph-visualization*
+
+The graph view visualizes connections between your notes using `[[wiki-style
+links]]`.
+
+
+GRAPH KEYMAPS (INSIDE GRAPH WINDOW) ~
+
+  Key       Action
+  --------- ------------------------
+  h/j/k/l   Navigate between nodes
+  Enter     Open selected note
+  t         Filter by tag
+  f         Filter by folder
+  r         Reset filter
+  L         Toggle labels
+  c         Center graph
+  +/-       Zoom in/out
+  ?         Toggle help
+  q/Esc     Close graph
+  R         Refresh graph
+
+LINKING NOTES ~
+
+>markdown
+    # My Note
+    
+    This relates to [[Another Note]] and also to [[Projects/My Project]].
+    Check out [[2024-01-15]] for more context.
+<
+
+
+USAGE EXAMPLES                                       *ideaDrop-usage-examples*
+
+
+QUICK NOTES ~
+
 >vim
-    :IdeaRight
+    :Idea                         " Open today's note in right split
+    :Idea project/vision          " Open project/vision.md
+    :IdeaToggle                   " Toggle the panel
 <
 
-2. Create a nested folder structure:
+
+TODO WORKFLOW ~
+
 >vim
-    :IdeaRight meetings/2024-01-15
-    :IdeaRight projects/app/features
+    :IdeaTodo                     " Open todo panel
+    :IdeaTodoAdd Fix login bug    " Add item
+    " Press <CR> on a line to toggle [x]
 <
 
-3. Add tags to current idea:
+
+TAG MANAGEMENT ~
+
 >vim
-    :IdeaAddTag work
-    :IdeaAddTag todo
+    :IdeaAddTag #work
+    :IdeaTags                     " Browse all tags
+    :IdeaSearchTag #work          " Find tagged files
 <
 
-4. Search for ideas:
+
+FILE ORGANIZATION ~
+
 >vim
-    :IdeaSearch "machine learning"
-    :IdeaSearchContent "algorithm"
+    :Idea meetings/2024-01-15     " Nested folders auto-created
+    :IdeaTree                     " Browse with nvim-tree
 <
 
-5. Browse and filter by tags:
+
+OBSIDIAN FEATURES ~
+
 >vim
-    :IdeaTags
+    :IdeaObsidian backlinks       " Show backlinks
+    :IdeaObsidian daily           " Open daily note
+    :IdeaObsidian search          " Search vault
 <
 
-==============================================================================
-TROUBLESHOOTING                                    *ideaDrop-troubleshooting*
 
-Common Issues ~
+CHANGELOG                                                 *ideaDrop-changelog*
 
-1. Module not found errors
-   - Ensure all dependencies are installed (nvim-tree, nvim-web-devicons)
+See CHANGELOG.md <CHANGELOG.md> for a detailed list of changes.
 
-2. Tree not opening
-   - Make sure nvim-tree is properly configured in your Neovim setup
 
-3. Tags not showing
-   - Check that your idea directory exists and contains markdown files
-   - Ensure tags use the `#tag` format
+LICENSE                                                     *ideaDrop-license*
 
-4. Search not working
-   - Verify your idea directory path is correct
-   - Check that markdown files exist in the directory
+MIT License - feel free to use this plugin in your own projects!
 
-==============================================================================
-vim:tw=78:ts=8:ft=help:norl:
+
+CONTRIBUTING                                           *ideaDrop-contributing*
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+
+DEVELOPMENT SETUP ~
+
+1. Clone the repository
+2. Install dependencies (nvim-tree, optionally obsidian.nvim)
+3. Run `stylua --check .` to verify formatting
+4. Test with the provided commands
+
+
+TROUBLESHOOTING                                     *ideaDrop-troubleshooting*
+
+
+COMMON ISSUES ~
+
+1. **Module not found errors**: Ensure all dependencies are installed
+2. **Tree not opening**: Make sure nvim-tree is properly configured
+3. **Search not working**: Verify your idea directory path is correct
+4. **Tags not showing**: Check that your idea directory exists and contains markdown files
+5. **Graph showing no connections**: Use `[[Note Name]]` syntax for links
+6. **Graph layout looks cramped**: Zoom out with `-` or use `:IdeaGraph animate`
+7. **Obsidian commands not working**: Install `epwalsh/obsidian.nvim` and check `:IdeaObsidian status`
+
+Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
+
+vim:tw=78:ts=8:noet:ft=help:norl:
