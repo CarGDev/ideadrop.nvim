@@ -119,10 +119,7 @@ function M.build_graph(force_rebuild)
 	local file_cache, updated, skipped = cache.build_cache(force_rebuild)
 
 	if not file_cache or not file_cache.files or vim.tbl_isempty(file_cache.files) then
-		vim.notify(
-			string.format("📂 No .md files found in: %s", idea_dir),
-			vim.log.levels.WARN
-		)
+		vim.notify(string.format("📂 No .md files found in: %s", idea_dir), vim.log.levels.WARN)
 		return graph
 	end
 
@@ -197,7 +194,10 @@ function M.build_graph(force_rebuild)
 	-- Show cache stats
 	local total = updated + skipped
 	if updated > 0 then
-		vim.notify(string.format("📊 Cache: %d updated, %d cached (%d total)", updated, skipped, total), vim.log.levels.INFO)
+		vim.notify(
+			string.format("📊 Cache: %d updated, %d cached (%d total)", updated, skipped, total),
+			vim.log.levels.INFO
+		)
 	end
 
 	return graph

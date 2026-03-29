@@ -1,8 +1,10 @@
 # Lua bytecode (just in case)
 *.luac
 
-*test*
-todo*
+# Ignore test directories but not test-related source files
+tests/
+*_test.lua
+*_spec.lua
 # OS junk
 .DS_Store
 Thumbs.db

@@ -10,20 +10,38 @@
 ---@field show_labels boolean Whether to show node labels by default (default: true)
 ---@field node_colors table<string, string>|nil Custom colors for folders/tags
 
+---@class TodoOptions
+---@field file string|nil Custom todo filename (default: ".todo.md")
+---@field width number|nil Panel width as ratio of screen (default: 0.25)
+
+---@class ObsidianOptions
+---@field enabled boolean Whether to enable obsidian.nvim integration (default: true)
+---@field auto_keymaps boolean Whether to set up obsidian keymaps on idea buffers (default: true)
+
 ---@class IdeaDropOptions
 ---@field idea_dir string Directory where idea files will be stored
 ---@field graph GraphOptions|nil Graph visualization options
+---@field todo TodoOptions|nil Todo list options
+---@field obsidian ObsidianOptions|nil Obsidian.nvim integration options
 
 local M = {}
 
 ---Default configuration options
 M.options = {
-	idea_dir = vim.fn.stdpath("data") .. "/ideaDrop", -- default path
+	idea_dir = vim.fn.stdpath("data") .. "/ideaDrop",
 	graph = {
-		animate = false, -- Set to true for animated layout
-		show_orphans = true, -- Show nodes with no connections
-		show_labels = true, -- Show node labels by default
-		node_colors = nil, -- Custom node colors by folder/tag
+		animate = false,
+		show_orphans = true,
+		show_labels = true,
+		node_colors = nil,
+	},
+	todo = {
+		file = ".todo.md",
+		width = 0.25,
+	},
+	obsidian = {
+		enabled = true,
+		auto_keymaps = true,
 	},
 }
 
@@ -33,12 +51,10 @@ M.options = {
 function M.setup(user_opts)
 	user_opts = user_opts or {}
 
-	-- Handle nil idea_dir (don't override default with nil)
 	if user_opts.idea_dir == nil then
 		user_opts.idea_dir = M.options.idea_dir
 	end
 
-	-- Expand environment variables and ~ in idea_dir
 	if user_opts.idea_dir then
 		user_opts.idea_dir = vim.fn.expand(user_opts.idea_dir)
 	end

@@ -1,0 +1,103 @@
+# ideaDrop.nvim
+
+> A Neovim plugin for capturing, organizing, and managing ideas inside an Obsidian-compatible vault with graph visualization, tagging, search, and project todo lists.
+
+## Overview
+
+ideaDrop.nvim is a Lua-based Neovim plugin that provides a distraction-free writing environment for notes and ideas. It stores standard markdown files compatible with Obsidian vaults, supports `[[wiki-style links]]` for graph visualization, and includes a project-scoped todo list with checkbox toggling.
+
+## Architecture
+
+```
+lua/ideaDrop/
+  init.lua                    -- Entry point, requires core
+  core/
+    init.lua                  -- Plugin setup, user commands, keymaps
+    config.lua                -- Configuration merging, defaults
+  ui/
+    sidebar.lua               -- Right-side split panel for editing notes
+    tree.lua                  -- nvim-tree integration for file browsing
+    graph/
+      init.lua                -- Graph window, keymaps, orchestration
+      types.lua               -- Type definitions for graph structures
+      data.lua                -- Markdown parsing, link extraction, filtering
+      layout.lua              -- Fruchterman-Reingold force-directed layout
+      renderer.lua            -- Character-based canvas rendering
+      cache.lua               -- File-based mtime caching for fast loads
+  features/
+    list.lua                  -- File listing with vim.ui.select picker
+    search.lua                -- Fuzzy, content, and title search
+    tags.lua                  -- Tag extraction, add/remove, filtering
+    todo.lua                  -- Project todo list with checkbox toggling
+  integrations/
+    obsidian.lua              -- Optional obsidian.nvim integration
+  utils/
+    constants.lua             -- Defaults, icons, graph parameters, colors
+    keymaps.lua               -- Keymap definitions
+    utils.lua                 -- Path, string, file, notification helpers
+```
+
+## Key Design Decisions
+
+- **Right-side splits over floating windows**: All note editing happens in `botright vsplit` splits that stay fixed on the right side of the editor, not floating windows.
+- **Standard markdown files**: No proprietary format. Files are plain `.md` compatible with Obsidian, other editors, and version control.
+- **Optional obsidian.nvim integration**: When `epwalsh/obsidian.nvim` is installed, ideaDrop delegates link following, backlinks, renaming, and search to it. Works standalone without it.
+- **Graph uses character rendering**: The force-directed graph draws directly to a Neovim buffer using box-drawing characters. No external dependencies.
+- **Per-project todo**: The todo list is stored as `.todo.md` in the idea directory, scoped to the vault/project.
+
+## User Commands
+
+| Command | Purpose |
+|---------|---------|
+| `:Idea [name]` | Open note in right-side split (today's date by default) |
+| `:IdeaBuffer [name]` | Open note in current buffer |
+| `:IdeaRight [name]` | Alias for `:Idea` |
+| `:IdeaClose` | Close the right-side panel |
+| `:IdeaToggle` | Toggle the right-side panel |
+| `:IdeaTree` | Browse files with nvim-tree |
+| `:IdeaTodo` | Toggle the project todo list |
+| `:IdeaTodoAdd [text]` | Add a new todo item |
+| `:IdeaTags` | Browse all tags |
+| `:IdeaAddTag <tag>` | Add tag to current note |
+| `:IdeaRemoveTag <tag>` | Remove tag from current note |
+| `:IdeaSearchTag <tag>` | Find files with tag |
+| `:IdeaSearch <query>` | Fuzzy search titles and content |
+| `:IdeaSearchContent <query>` | Search content only |
+| `:IdeaSearchTitle <query>` | Search titles only |
+| `:IdeaGraph` | Open graph visualization |
+| `:IdeaGraphFilter <type> <value>` | Filter graph by tag or folder |
+| `:IdeaGraphClearCache` | Clear graph cache |
+| `:IdeaObsidian <cmd>` | Obsidian.nvim commands (backlinks, search, daily, new, switch, tags, paste, rename, open, status) |
+
+## Configuration
+
+```lua
+require("ideaDrop").setup({
+  idea_dir = "/path/to/obsidian/vault",
+  graph = {
+    animate = false,
+    show_orphans = true,
+    show_labels = true,
+    node_colors = nil,
+  },
+  todo = {
+    file = ".todo.md",
+    width = 0.25,
+  },
+  obsidian = {
+    enabled = true,
+    auto_keymaps = true,
+  },
+})
+```
+
+## Dependencies
+
+- **Required**: `nvim-tree/nvim-tree.lua`, `nvim-tree/nvim-web-devicons`
+- **Optional**: `epwalsh/obsidian.nvim` (for enhanced vault features)
+
+## Tech Stack
+
+- Lua (LuaJIT)
+- Neovim API (0.8+)
+- Markdown with `[[wiki-links]]` and `#tags`

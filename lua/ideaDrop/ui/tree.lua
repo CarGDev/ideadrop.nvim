@@ -15,30 +15,33 @@ local ideadrop_tree_autocmd_group = nil
 ---@return nil
 function M.open_tree_window(callback)
 	tree_callback = callback
-	
+
 	-- Check if nvim-tree is available
 	local has_nvim_tree_api, nvim_tree_api = pcall(require, "nvim-tree.api")
 	if not has_nvim_tree_api then
-		vim.notify("❌ nvim-tree is not installed. Please install nvim-tree to use this feature.", vim.log.levels.ERROR)
+		vim.notify(
+			"❌ nvim-tree is not installed. Please install nvim-tree to use this feature.",
+			vim.log.levels.ERROR
+		)
 		return
 	end
-	
+
 	-- Store original working directory
 	original_cwd = vim.fn.getcwd()
-	
+
 	-- Change to idea directory
 	local idea_path = config.options.idea_dir
 	if vim.fn.isdirectory(idea_path) == 0 then
 		-- Create the directory if it doesn't exist
 		vim.fn.mkdir(idea_path, "p")
 	end
-	
+
 	-- Create autocmd group for ideaDrop tree handling
 	if ideadrop_tree_autocmd_group then
 		vim.api.nvim_del_augroup_by_id(ideadrop_tree_autocmd_group)
 	end
 	ideadrop_tree_autocmd_group = vim.api.nvim_create_augroup("IdeaDropTree", { clear = true })
-	
+
 	-- Set up autocmd to handle file selection from nvim-tree
 	vim.api.nvim_create_autocmd("BufEnter", {
 		group = ideadrop_tree_autocmd_group,
@@ -65,7 +68,7 @@ function M.open_tree_window(callback)
 			end
 		end,
 	})
-	
+
 	-- Set up autocmd to restore cwd when nvim-tree is closed
 	vim.api.nvim_create_autocmd("BufLeave", {
 		group = ideadrop_tree_autocmd_group,
@@ -84,10 +87,10 @@ function M.open_tree_window(callback)
 			end
 		end,
 	})
-	
+
 	-- Open nvim-tree in the idea directory (without calling setup)
 	-- This preserves the user's nvim-tree configuration
 	nvim_tree_api.tree.open({ path = idea_path })
 end
 
-return M 
+return M

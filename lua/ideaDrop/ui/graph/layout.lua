@@ -271,8 +271,7 @@ function M.step(graph, state, width, height)
 	state.iteration = state.iteration + 1
 
 	-- Check convergence
-	state.converged = max_displacement < SETTINGS.MIN_VELOCITY
-		or state.iteration >= SETTINGS.MAX_ITERATIONS
+	state.converged = max_displacement < SETTINGS.MIN_VELOCITY or state.iteration >= SETTINGS.MAX_ITERATIONS
 
 	return state.converged
 end

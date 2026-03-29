@@ -48,9 +48,9 @@ M.DEFAULT_TEMPLATES = {
 
 -- Window dimensions (as percentages of screen)
 M.WINDOW_DIMENSIONS = {
-	RIGHT_SIDE_WIDTH = 0.3,    -- 30% of screen width
-	TREE_WIDTH = 0.25,         -- 25% of screen width
-	FLOATING_HEIGHT = 0.8,     -- 80% of screen height
+	RIGHT_SIDE_WIDTH = 0.3, -- 30% of screen width
+	TREE_WIDTH = 0.25, -- 25% of screen width
+	FLOATING_HEIGHT = 0.8, -- 80% of screen height
 }
 
 -- Buffer options
@@ -99,12 +99,65 @@ M.TAG_SETTINGS = {
 
 -- Common words to exclude from tags
 M.COMMON_WORDS = {
-	"the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with",
-	"by", "is", "are", "was", "were", "be", "been", "have", "has", "had",
-	"do", "does", "did", "will", "would", "could", "should", "may", "might",
-	"can", "this", "that", "these", "those", "i", "you", "he", "she", "it",
-	"we", "they", "me", "him", "her", "us", "them", "my", "your", "his",
-	"her", "its", "our", "their", "mine", "yours", "hers", "ours", "theirs"
+	"the",
+	"and",
+	"or",
+	"but",
+	"in",
+	"on",
+	"at",
+	"to",
+	"for",
+	"of",
+	"with",
+	"by",
+	"is",
+	"are",
+	"was",
+	"were",
+	"be",
+	"been",
+	"have",
+	"has",
+	"had",
+	"do",
+	"does",
+	"did",
+	"will",
+	"would",
+	"could",
+	"should",
+	"may",
+	"might",
+	"can",
+	"this",
+	"that",
+	"these",
+	"those",
+	"i",
+	"you",
+	"he",
+	"she",
+	"it",
+	"we",
+	"they",
+	"me",
+	"him",
+	"her",
+	"us",
+	"them",
+	"my",
+	"your",
+	"his",
+	"her",
+	"its",
+	"our",
+	"their",
+	"mine",
+	"yours",
+	"hers",
+	"ours",
+	"theirs",
 }
 
 -- Icons for different file types and actions
@@ -232,4 +285,4 @@ M.MESSAGES = {
 	GRAPH_NO_SELECTION = "🕸️ No node selected",
 }
 
-return M 
+return M

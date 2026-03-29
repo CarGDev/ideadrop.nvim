@@ -35,7 +35,7 @@ end
 ---@return string Sanitized filename
 function M.sanitize_filename(filename)
 	-- Remove or replace invalid characters
-	local sanitized = filename:gsub("[<>:\"/\\|?*]", "_")
+	local sanitized = filename:gsub('[<>:"/\\|?*]', "_")
 	-- Remove leading/trailing spaces and dots
 	sanitized = sanitized:gsub("^[%s%.]+", ""):gsub("[%s%.]+$", "")
 	-- Ensure it's not empty

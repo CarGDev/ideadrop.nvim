@@ -92,8 +92,15 @@ local function update_display()
 	state.node_positions = {}
 	for _, node in ipairs(state.graph.node_list) do
 		if node.visible then
-			local x = math.floor((node.x - state.canvas_width / 2) * state.view.zoom + state.canvas_width / 2 + state.view.offset_x + 0.5)
-			local y = math.floor((node.y - state.canvas_height / 2) * state.view.zoom + state.canvas_height / 2 + state.view.offset_y + 0.5)
+			local x = math.floor(
+				(node.x - state.canvas_width / 2) * state.view.zoom + state.canvas_width / 2 + state.view.offset_x + 0.5
+			)
+			local y = math.floor(
+				(node.y - state.canvas_height / 2) * state.view.zoom
+					+ state.canvas_height / 2
+					+ state.view.offset_y
+					+ 0.5
+			)
 
 			if x >= 1 and x <= state.canvas_width and y >= 1 and y <= state.canvas_height - 2 then
 				local key = string.format("%d,%d", y, x)
@@ -440,14 +447,11 @@ function M.open(opts)
 	local config = require("ideaDrop.core.config")
 	local idea_dir = vim.fn.expand(config.options.idea_dir or "")
 	vim.notify(string.format("🕸️ Loading graph from: %s", idea_dir), vim.log.levels.INFO)
-	
+
 	state.graph = data.build_graph(opts.force_rebuild)
 
 	if #state.graph.node_list == 0 then
-		vim.notify(
-			string.format("No notes found to visualize in: %s", idea_dir),
-			vim.log.levels.WARN
-		)
+		vim.notify(string.format("No notes found to visualize in: %s", idea_dir), vim.log.levels.WARN)
 		M.close()
 		return
 	end

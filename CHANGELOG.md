@@ -9,9 +9,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-#### 🕸️ Graph Visualization (Obsidian-style)
+#### Right-Side Split Windows (replaces floating windows)
 
-A new force-directed graph view that visualizes connections between your notes:
+All note editing now uses proper `botright vsplit` windows instead of floating windows:
+
+- `:Idea` now opens in a fixed right-side split (was floating window)
+- `:IdeaRight` uses the same right-side split behavior
+- New `:IdeaClose` command to close the right-side panel
+- New `:IdeaToggle` command to toggle the panel open/closed
+- Panel has `winfixwidth` set so it stays at 30% width when resizing
+- Auto-save on window close preserved
+
+#### Project Todo List
+
+A new project-scoped todo list that opens in a fixed right-side split:
+
+- `:IdeaTodo` toggles the todo panel (25% width)
+- `:IdeaTodoAdd [text]` adds a new todo item
+- Toggle checkboxes with `<CR>` or `<Space>` on any `- [ ]` / `- [x]` line
+- `o` to add a new item below cursor and enter insert mode
+- `dd` to remove a checkbox item
+- `q` to close the panel
+- Auto-saves to `.todo.md` in your idea directory
+- Persists across sessions
+
+#### Obsidian.nvim Integration
+
+Optional integration with `epwalsh/obsidian.nvim` for enhanced vault capabilities:
+
+- `:IdeaObsidian` command with subcommands: backlinks, search, daily, new, switch, tags, paste, rename, open, status
+- Auto-detects obsidian.nvim at startup
+- `gf` follows `[[wiki-links]]` via obsidian.nvim when available
+- `<leader>ob` shows backlinks, `<leader>os` searches, `<leader>on` creates new notes
+- `<leader>oo` opens current note in Obsidian app
+- `<leader>or` renames note with backlink updates
+- `<leader>op` pastes images from clipboard
+- Graceful fallback when obsidian.nvim is not installed
+
+#### CI/CD and Project Tooling
+
+- GitHub Actions CI workflow: Stylua lint check and panvimdoc generation
+- GitHub Actions release workflow: release-please for semantic versioning
+- GitHub Actions TODO-to-issue workflow: auto-creates issues from TODO comments
+- `.stylua.toml` for consistent Lua formatting
+- `.editorconfig` for editor-agnostic settings
+- `.luarc.json` for Lua language server configuration
+- `.pre-commit-config.yaml` with Stylua hook
+- `llm.txt` for AI/LLM context about the project
+
+#### Other
+
+- New `lua/ideaDrop/features/todo.lua` module
+- New `lua/ideaDrop/integrations/obsidian.lua` module
+- Added `todo` and `obsidian` configuration sections
+- `sidebar.is_open()` function to check panel state
+- `sidebar.close()` and `sidebar.toggle()` functions
+
+### Changed
+
+- `:Idea` command now opens in right-side split instead of floating window
+- `sidebar.open()` delegates to `open_right_side()` by default (was floating)
+- Removed floating window code from sidebar module
+- Extracted `resolve_file()` and `load_content()` helpers in sidebar
+- Extracted `resolve_idea_path()` helper in core/init.lua to reduce duplication
+- Updated configuration types to include todo and obsidian options
+- Simplified notification messages (removed emoji prefixes for cleaner logs)
+
+### Removed
+
+- Floating window mode for `:Idea` command (use `:IdeaBuffer` for inline editing)
+- `relative = "editor"` floating window positioning code
+
+## [1.1.0] - Graph Visualization and Performance
+
+### Added
+
+#### Graph Visualization (Obsidian-style)
+
+A force-directed graph view that visualizes connections between notes:
 
 - **Graph Data Model**: Parses `[[Note Name]]` wiki-style links from markdown files
   - Supports `[[link|alias]]` format
@@ -22,7 +97,6 @@ A new force-directed graph view that visualizes connections between your notes:
   - Spring forces attract connected nodes
   - Repulsion forces prevent node overlap
   - Gravity pulls high-degree nodes toward center
-  - Inverse gravity pushes orphan nodes to periphery
   - Temperature-based cooling for stable convergence
   - Supports both synchronous and animated layout modes
 
@@ -31,84 +105,28 @@ A new force-directed graph view that visualizes connections between your notes:
   - Node size scales with degree (number of connections)
   - Color-coded nodes: blue (default), purple (hubs), gray (orphans), red (selected)
   - Semi-transparent edge lines showing connections
-  - Labels for selected and high-degree nodes
 
 - **Interactive Features**:
-  - `h/j/k/l` navigation between nodes
-  - `Enter` to open selected note in right-side buffer
+  - `h/j/k/l` navigation, `Enter` to open note
   - `t` filter by tag, `f` filter by folder, `r` reset filter
-  - `+/-` zoom in/out, `c` center graph
-  - `L` toggle labels, `?` toggle help overlay
-  - `q/Esc` close graph, `R` refresh graph data
-  - Smooth layout reflow when nodes are filtered
+  - `+/-` zoom, `c` center, `L` toggle labels, `?` help
+  - `q/Esc` close, `R` refresh
 
-- **New Commands**:
-  - `:IdeaGraph` - Opens the graph visualization
-  - `:IdeaGraph animate` - Opens with animated layout
-  - `:IdeaGraph refresh` - Refreshes graph data
-  - `:IdeaGraph rebuild` - Force full cache rebuild
-  - `:IdeaGraph close` - Closes the graph window
-  - `:IdeaGraphFilter tag <name>` - Filter graph by tag
-  - `:IdeaGraphFilter folder <name>` - Filter graph by folder
-  - `:IdeaGraphClearCache` - Clear the graph cache file
+- **Commands**: `:IdeaGraph`, `:IdeaGraph animate/refresh/rebuild/close`, `:IdeaGraphFilter`, `:IdeaGraphClearCache`
+- **Configuration**: `graph.animate`, `graph.show_orphans`, `graph.show_labels`, `graph.node_colors`
 
-- **New Configuration Options**:
-  - `graph.animate` - Enable animated layout (default: false)
-  - `graph.show_orphans` - Show nodes without connections (default: true)
-  - `graph.show_labels` - Show node labels by default (default: true)
-  - `graph.node_colors` - Custom colors by folder/tag
+#### Graph Performance Optimizations
 
-- **New Files**:
-  - `lua/ideaDrop/ui/graph/types.lua` - Type definitions
-  - `lua/ideaDrop/ui/graph/data.lua` - Graph data model
-  - `lua/ideaDrop/ui/graph/layout.lua` - Force-directed layout algorithm
-  - `lua/ideaDrop/ui/graph/renderer.lua` - Character-based canvas renderer
-  - `lua/ideaDrop/ui/graph/init.lua` - Main graph module
-  - `lua/ideaDrop/ui/graph/cache.lua` - Caching system for fast loading
-
-#### ⚡ Graph Performance Optimizations
-
-Fast loading system similar to Obsidian's caching approach:
-
-- **Caching System** (`cache.lua`):
-  - Stores parsed links and tags per file in `.ideadrop-graph-cache.json`
-  - Only re-parses files that have been modified (mtime-based invalidation)
-  - First load scans all files, subsequent loads are nearly instant
-  - Cache stored in idea_dir alongside your notes
-
-- **Layout Algorithm Optimizations**:
-  - Reduced max iterations (300 → 100) for faster convergence
-  - Barnes-Hut approximation for large graphs (100+ nodes)
-  - Skip distant node pairs in repulsion calculations
-  - Local math function caching for speed
-  - Tuned force parameters for faster stabilization
-
-- **File Scanning**:
-  - Uses `vim.fs.find` for faster directory scanning (Neovim 0.8+)
-  - Fallback to glob for older versions
-  - Better path handling with environment variable expansion
-
-#### Other Additions
-
-- Added `CHANGELOG.md` to track project changes
-- Added `llms.txt` for AI/LLM context about the project
-- Added graph-related constants and settings in `constants.lua`
-- Added graph-related notification messages
-
-### Changed
-
-- Updated help documentation (`doc/ideaDrop.txt`) to include all commands: `IdeaBuffer`, `IdeaRight`, `IdeaTree`, tag commands, and search commands
-- Improved nvim-tree integration to preserve user's existing nvim-tree configuration
-- Updated `README.md` with comprehensive graph visualization documentation
-- Extended configuration options to include graph settings
+- Caching system with `.ideadrop-graph-cache.json` (mtime-based invalidation)
+- Reduced max iterations (300 -> 100) for faster convergence
+- Barnes-Hut approximation for large graphs (100+ nodes)
+- Local math function caching
 
 ### Fixed
 
-- **Critical**: Fixed glob pattern bug where files were not being found due to missing path separator (`/`) between directory and pattern in `list.lua`, `tags.lua`, and `search.lua`
-- **Critical**: Fixed nvim-tree integration that was overriding user's nvim-tree configuration on every `:IdeaTree` call. Now uses nvim-tree API directly without calling `setup()`
-- Fixed deprecated Neovim API usage: replaced `vim.api.nvim_buf_set_option()` and `vim.api.nvim_win_set_option()` with `vim.bo[]` and `vim.wo[]` in `sidebar.lua`
-- Fixed missing arguments in `sidebar.open()` call in `list.lua` which could cause unexpected behavior
-- Removed unused variable in `tags.lua` (`filename` in `show_files_with_tag` function)
+- Glob pattern bug in `list.lua`, `tags.lua`, `search.lua`
+- nvim-tree integration overriding user config
+- Deprecated Neovim API usage in `sidebar.lua`
 
 ## [1.0.0] - Initial Release
 

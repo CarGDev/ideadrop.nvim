@@ -20,7 +20,7 @@ local tag_cache_dirty = true
 function M.extract_tags(content)
 	local tags = {}
 	local lines = vim.split(content, "\n")
-	
+
 	for _, line in ipairs(lines) do
 		-- Find all #tag patterns in the line
 		for tag in line:gmatch("#([%w%-_]+)") do
@@ -30,7 +30,7 @@ function M.extract_tags(content)
 			end
 		end
 	end
-	
+
 	-- Remove duplicates and sort
 	local unique_tags = {}
 	local seen = {}
@@ -40,7 +40,7 @@ function M.extract_tags(content)
 			seen[tag] = true
 		end
 	end
-	
+
 	table.sort(unique_tags)
 	return unique_tags
 end
@@ -50,21 +50,74 @@ end
 ---@return boolean True if it's a common word
 function M.is_common_word(word)
 	local common_words = {
-		"the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with",
-		"by", "is", "are", "was", "were", "be", "been", "have", "has", "had",
-		"do", "does", "did", "will", "would", "could", "should", "may", "might",
-		"can", "this", "that", "these", "those", "i", "you", "he", "she", "it",
-		"we", "they", "me", "him", "her", "us", "them", "my", "your", "his",
-		"her", "its", "our", "their", "mine", "yours", "hers", "ours", "theirs"
+		"the",
+		"and",
+		"or",
+		"but",
+		"in",
+		"on",
+		"at",
+		"to",
+		"for",
+		"of",
+		"with",
+		"by",
+		"is",
+		"are",
+		"was",
+		"were",
+		"be",
+		"been",
+		"have",
+		"has",
+		"had",
+		"do",
+		"does",
+		"did",
+		"will",
+		"would",
+		"could",
+		"should",
+		"may",
+		"might",
+		"can",
+		"this",
+		"that",
+		"these",
+		"those",
+		"i",
+		"you",
+		"he",
+		"she",
+		"it",
+		"we",
+		"they",
+		"me",
+		"him",
+		"her",
+		"us",
+		"them",
+		"my",
+		"your",
+		"his",
+		"her",
+		"its",
+		"our",
+		"their",
+		"mine",
+		"yours",
+		"hers",
+		"ours",
+		"theirs",
 	}
-	
+
 	word = word:lower()
 	for _, common in ipairs(common_words) do
 		if word == common then
 			return true
 		end
 	end
-	
+
 	return false
 end
 
@@ -74,19 +127,19 @@ function M.get_all_tags()
 	if not tag_cache_dirty and #tag_cache > 0 then
 		return tag_cache
 	end
-	
+
 	local idea_path = config.options.idea_dir
 	local all_tags = {}
 	local seen = {}
-	
+
 	-- Find all .md files recursively
 	local files = vim.fn.glob(idea_path .. "/**/*.md", false, true)
-	
+
 	for _, file in ipairs(files) do
 		if vim.fn.filereadable(file) == 1 then
 			local content = vim.fn.readfile(file)
 			local file_tags = M.extract_tags(table.concat(content, "\n"))
-			
+
 			for _, tag in ipairs(file_tags) do
 				if not seen[tag] then
 					table.insert(all_tags, tag)
@@ -95,11 +148,11 @@ function M.get_all_tags()
 			end
 		end
 	end
-	
+
 	table.sort(all_tags)
 	tag_cache = all_tags
 	tag_cache_dirty = false
-	
+
 	return all_tags
 end
 
@@ -112,10 +165,10 @@ function M.add_tag(file_path, tag)
 		vim.notify("❌ File not found: " .. file_path, vim.log.levels.ERROR)
 		return
 	end
-	
+
 	local content = vim.fn.readfile(file_path)
 	local existing_tags = M.extract_tags(table.concat(content, "\n"))
-	
+
 	-- Check if tag already exists
 	for _, existing_tag in ipairs(existing_tags) do
 		if existing_tag == tag then
@@ -123,24 +176,24 @@ function M.add_tag(file_path, tag)
 			return
 		end
 	end
-	
+
 	-- Add tag to the end of the file
 	table.insert(content, "")
 	table.insert(content, "#" .. tag)
-	
+
 	-- Write back to file
 	local f, err = io.open(file_path, "w")
 	if not f then
 		vim.notify("❌ Failed to write file: " .. tostring(err), vim.log.levels.ERROR)
 		return
 	end
-	
+
 	f:write(table.concat(content, "\n") .. "\n")
 	f:close()
-	
+
 	-- Invalidate cache
 	tag_cache_dirty = true
-	
+
 	vim.notify("✅ Added tag '" .. tag .. "' to " .. vim.fn.fnamemodify(file_path, ":t"), vim.log.levels.INFO)
 end
 
@@ -153,11 +206,11 @@ function M.remove_tag(file_path, tag)
 		vim.notify("❌ File not found: " .. file_path, vim.log.levels.ERROR)
 		return
 	end
-	
+
 	local content = vim.fn.readfile(file_path)
 	local new_content = {}
 	local tag_found = false
-	
+
 	for _, line in ipairs(content) do
 		-- Check if line contains the tag
 		local has_tag = false
@@ -168,30 +221,30 @@ function M.remove_tag(file_path, tag)
 				break
 			end
 		end
-		
+
 		if not has_tag then
 			table.insert(new_content, line)
 		end
 	end
-	
+
 	if not tag_found then
 		vim.notify("🏷️ Tag '" .. tag .. "' not found in file", vim.log.levels.INFO)
 		return
 	end
-	
+
 	-- Write back to file
 	local f, err = io.open(file_path, "w")
 	if not f then
 		vim.notify("❌ Failed to write file: " .. tostring(err), vim.log.levels.ERROR)
 		return
 	end
-	
+
 	f:write(table.concat(new_content, "\n") .. "\n")
 	f:close()
-	
+
 	-- Invalidate cache
 	tag_cache_dirty = true
-	
+
 	vim.notify("✅ Removed tag '" .. tag .. "' from " .. vim.fn.fnamemodify(file_path, ":t"), vim.log.levels.INFO)
 end
 
@@ -201,15 +254,15 @@ end
 function M.get_files_by_tag(tag)
 	local idea_path = config.options.idea_dir
 	local matching_files = {}
-	
+
 	-- Find all .md files recursively
 	local files = vim.fn.glob(idea_path .. "/**/*.md", false, true)
-	
+
 	for _, file in ipairs(files) do
 		if vim.fn.filereadable(file) == 1 then
 			local content = vim.fn.readfile(file)
 			local file_tags = M.extract_tags(table.concat(content, "\n"))
-			
+
 			for _, file_tag in ipairs(file_tags) do
 				if file_tag == tag then
 					table.insert(matching_files, file)
@@ -218,7 +271,7 @@ function M.get_files_by_tag(tag)
 			end
 		end
 	end
-	
+
 	return matching_files
 end
 
@@ -227,19 +280,19 @@ end
 ---@return nil
 function M.show_tag_picker(callback)
 	local all_tags = M.get_all_tags()
-	
+
 	if #all_tags == 0 then
 		vim.notify("🏷️ No tags found in your ideas", vim.log.levels.INFO)
 		return
 	end
-	
+
 	-- Format tags for display
 	local tag_choices = {}
 	for _, tag in ipairs(all_tags) do
 		local files = M.get_files_by_tag(tag)
 		table.insert(tag_choices, tag .. " (" .. #files .. " files)")
 	end
-	
+
 	vim.ui.select(tag_choices, { prompt = "🏷️ Select a tag:" }, function(choice)
 		if choice then
 			local tag = choice:match("^([%w%-_]+)")
@@ -255,19 +308,19 @@ end
 ---@return nil
 function M.show_files_with_tag(tag)
 	local files = M.get_files_by_tag(tag)
-	
+
 	if #files == 0 then
 		vim.notify("📂 No files found with tag '" .. tag .. "'", vim.log.levels.INFO)
 		return
 	end
-	
+
 	-- Format file names for display
 	local file_choices = {}
 	for _, file in ipairs(files) do
 		local relative_path = file:sub(#config.options.idea_dir + 2) -- Remove idea_dir + "/"
 		table.insert(file_choices, relative_path)
 	end
-	
+
 	vim.ui.select(file_choices, { prompt = "📂 Files with tag '" .. tag .. "':" }, function(choice)
 		if choice then
 			local full_path = config.options.idea_dir .. "/" .. choice
@@ -279,4 +332,4 @@ function M.show_files_with_tag(tag)
 	end)
 end
 
-return M 
+return M
