@@ -184,28 +184,46 @@ function M.open_right_side(file, filename)
 	vim.wo[right_side_win].relativenumber = false
 	vim.wo[right_side_win].cursorline = true
 	vim.wo[right_side_win].winfixwidth = true
-	-- Prevent other buffers from opening in this window
-	if vim.fn.has("nvim-0.10") == 1 then
-		vim.wo[right_side_win].winfixbuf = true
-	else
-		vim.api.nvim_create_autocmd("BufWinEnter", {
-			callback = function()
-				if right_side_win and vim.api.nvim_win_is_valid(right_side_win) then
-					local cur_win = vim.api.nvim_get_current_win()
-					if cur_win == right_side_win then
-						local cur_buf = vim.api.nvim_win_get_buf(right_side_win)
-						if cur_buf ~= right_side_buf then
-							-- Move the intruding buffer to a previous window and restore ours
-							vim.cmd("wincmd p")
-							vim.api.nvim_win_set_buf(right_side_win, right_side_buf)
+	-- Redirect any foreign buffer that lands in this window back to the main editor
+	vim.api.nvim_create_autocmd("BufEnter", {
+		callback = function()
+			if not right_side_win or not vim.api.nvim_win_is_valid(right_side_win) then
+				return true -- delete autocmd when window is gone
+			end
+			if vim.api.nvim_get_current_win() ~= right_side_win then
+				return
+			end
+			local cur_buf = vim.api.nvim_win_get_buf(right_side_win)
+			if cur_buf == right_side_buf then
+				return
+			end
+			-- A foreign buffer entered our window — redirect it
+			local intruding_buf = cur_buf
+			vim.api.nvim_win_set_buf(right_side_win, right_side_buf)
+			vim.schedule(function()
+				-- Find a non-sidebar window to open the buffer in
+				local target_win = nil
+				for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+					if win ~= right_side_win and vim.api.nvim_win_is_valid(win) then
+						local win_buf = vim.api.nvim_win_get_buf(win)
+						local bt = vim.bo[win_buf].buftype
+						if bt == "" or bt == nil then
+							target_win = win
+							break
 						end
 					end
-				else
-					return true -- delete autocmd when window is gone
 				end
-			end,
-		})
-	end
+				if target_win then
+					vim.api.nvim_set_current_win(target_win)
+					vim.api.nvim_win_set_buf(target_win, intruding_buf)
+				else
+					-- No suitable window found — create a split to the left
+					vim.cmd("aboveleft vsplit")
+					vim.api.nvim_win_set_buf(vim.api.nvim_get_current_win(), intruding_buf)
+				end
+			end)
+		end,
+	})
 
 	-- Save on window close
 	vim.api.nvim_create_autocmd("WinClosed", {

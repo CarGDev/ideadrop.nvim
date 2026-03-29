@@ -9,9 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Idea sidebar and todo panel no longer hijack file opens — uses `winfixbuf` on
-  Neovim 0.10+ and a `BufWinEnter` fallback on older versions so `:edit`, `gf`,
-  and plugin navigations always open in the main editor window
+- Idea sidebar and todo panel no longer hijack file opens — foreign buffers are
+  intercepted via `BufEnter` and redirected to the main editor window, so
+  `:edit`, `gf`, obsidian.nvim links, and plugin navigations never land inside
+  the panel (works on all Neovim versions)
 
 ## [2.0.0]
 
